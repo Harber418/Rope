@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 class Rope:
 
 
-    def __init__(self, n, m, g, k, rest_L, M, M_pos, anchor, dt, time, inits, damping=0):
+    def __init__(self, n, m, g, k, rest_L, M, M_pos, anchor, dt, time, inits, damping=0.0):
         self.dt = dt
         self.inits = inits
         self.timesteps = int(time / self.dt)
-        "normalised between 0 and 1"
+        #"normalised between 0 and 1"
         self.damping = damping
         
         mx_pos = np.linspace(anchor[0], M_pos[0], n)
@@ -60,7 +60,7 @@ class Rope:
                 print(i, end='\r')
         
 
-    def forces(self, pos):
+    def forces(self, pos, velocities):
         self.f = np.zeros([self.n, 2])
 
         # force on 0th mass is always 0; anchor point
@@ -70,14 +70,17 @@ class Rope:
             diff_Rx = pos[i, 0] - pos[i+1, 0]
             diff_Ry = pos[i, 1] - pos[i+1, 1]
 
-            self.f[i, 0] = - self.k * (diff_Lx - np.sign(diff_Lx) * self.rest + diff_Rx - np.sign(diff_Rx) * self.rest)
-            self.f[i, 1] = - self.k * (diff_Ly - np.sign(diff_Ly) * self.rest + diff_Ry - np.sign(diff_Ry) * self.rest) - self.masses[i] * self.g
+	    #update forces for spring in the x axis 
+            self.f[i, 0] = - self.k * (diff_Lx - np.sign(diff_Lx) * self.rest + diff_Rx - np.sign(diff_Rx) * self.rest) - self.damping*velocities[i,0]
+            #update forces for sping in y axis 
+            self.f[i, 1] = - self.k * (diff_Ly - np.sign(diff_Ly) * self.rest + diff_Ry - np.sign(diff_Ry) * self.rest) - self.masses[i] * self.g - self.damping*velocities[i,1]
 
+	#update forces for climber (mass M )
         diff_Lx = pos[-1, 0] - pos[-2, 0]
         diff_Ly = pos[-1, 1] - pos[-2, 1]
 
-        self.f[-1, 0] = - self.k * (diff_Lx - np.sign(diff_Lx) * self.rest)
-        self.f[-1, 1] = - self.k * (diff_Ly - np.sign(diff_Ly) * self.rest) - self.masses[-1] * self.g
+        self.f[-1, 0] = - self.k * (diff_Lx - np.sign(diff_Lx) * self.rest) - self.damping*velocities[-1,0] 
+        self.f[-1, 1] = - self.k * (diff_Ly - np.sign(diff_Ly) * self.rest) - self.masses[-1] * self.g -self.damping*velocities[-1,1]
 
     def update(self):
         state = np.array([self.pos, self.v])
@@ -90,11 +93,10 @@ class Rope:
     def derivatives(self, state):
         positions = state[0]
         velocities = state[1]
-        "damping forces calucalted as F = - damping factor * v "
-        self.f = -self.damping * velocities
-        "updates self.f with spring and gravity forces"
-        self.forces(positions)
-        "acceleration is now based on force of gravity, spring and damping"
+        
+        #"updates self.f with spring and gravity forces and damping"
+        self.forces(positions, velocities)
+        #acceleration is now based on force of gravity, spring and damping"
         acceleration = self.f / self.masses[:, None]
         
         dpositions = velocities
@@ -103,7 +105,7 @@ class Rope:
         return np.array([dpositions, dvelocities])
 
     def rk4(self, state):
-        "rk4 is v cool"
+        #rk4 is v cool
         k1 = self.dt * self.derivatives(state)
         k2 = self.dt * self.derivatives(state + 0.5 * k1)
         k3 = self.dt * self.derivatives(state + 0.5 * k2)
@@ -112,7 +114,7 @@ class Rope:
         return state + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
 
 def main():
-  rope = Rope(50, 5, 9.81, 5000, 10, 75, np.zeros(2), np.zeros(2), 0.001, 20, 0)
+  rope = Rope(50, 5, 9.81, 5000, 10, 75, np.zeros(2), np.zeros(2), 0.001, 30, 0,)
   rope.run()
   "plot"
   t = rope.timesteps + rope.inits
