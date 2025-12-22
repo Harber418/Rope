@@ -1,14 +1,16 @@
-import numpy 
+import numpy as np
 import matplotlib.pyplot as plt
 
 
 class Rope:
 
-    def __init__(self, n, m, g, k, rest_L, M, M_pos, anchor, dt, time, inits):
+
+    def __init__(self, n, m, g, k, rest_L, M, M_pos, anchor, dt, time, inits, damping=0):
         self.dt = dt
         self.inits = inits
         self.timesteps = int(time / self.dt)
-    
+        "normalised between 0 and 1"
+        self.damping = damping
         
         mx_pos = np.linspace(anchor[0], M_pos[0], n)
         my_pos = np.linspace(anchor[1], M_pos[1], n)
@@ -88,8 +90,11 @@ class Rope:
     def derivatives(self, state):
         positions = state[0]
         velocities = state[1]
-        
+        "damping forces calucalted as F = - damping factor * v "
+        self.f = -self.damping * velocities
+        "updates self.f with spring and gravity forces"
         self.forces(positions)
+        "acceleration is now based on force of gravity, spring and damping"
         acceleration = self.f / self.masses[:, None]
         
         dpositions = velocities
@@ -98,6 +103,7 @@ class Rope:
         return np.array([dpositions, dvelocities])
 
     def rk4(self, state):
+        "rk4 is v cool"
         k1 = self.dt * self.derivatives(state)
         k2 = self.dt * self.derivatives(state + 0.5 * k1)
         k3 = self.dt * self.derivatives(state + 0.5 * k2)
@@ -105,12 +111,10 @@ class Rope:
         
         return state + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
 
-if __name__ == "__main__":
+def main():
   rope = Rope(50, 5, 9.81, 5000, 10, 75, np.zeros(2), np.zeros(2), 0.001, 20, 0)
   rope.run()
-  
-  import matplotlib.pyplot as plt
-  
+  "plot"
   t = rope.timesteps + rope.inits
   dt = rope.dt
   x = np.linspace(0, t*dt, t + 1)
@@ -121,3 +125,7 @@ if __name__ == "__main__":
   plt.plot(x, y)
   plt.axhline(0, color = 'r', linestyle='--')
   plt.show()
+
+
+if __name__ == "__main__":
+    main()
