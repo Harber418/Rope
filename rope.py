@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 class Rope:
 
 
-    def __init__(self, n, m, g, k, rest_L, M, M_pos, anchor, dt, time, inits, damping=0.0):
+    def __init__(self, n, m, g, k, rest_L, M, M_pos, anchor, dt, time, inits, damping=0.3):
         self.dt = dt
         self.inits = inits
         self.timesteps = int(time / self.dt)
@@ -71,16 +71,16 @@ class Rope:
             diff_Ry = pos[i, 1] - pos[i+1, 1]
 
 	    #update forces for spring in the x axis 
-            self.f[i, 0] = - self.k * (diff_Lx - np.sign(diff_Lx) * self.rest + diff_Rx - np.sign(diff_Rx) * self.rest) - self.damping*velocities[i,0]
+            self.f[i, 0] = - self.k * (diff_Lx + diff_Rx ) - self.damping*velocities[i,0]
             #update forces for sping in y axis 
-            self.f[i, 1] = - self.k * (diff_Ly - np.sign(diff_Ly) * self.rest + diff_Ry - np.sign(diff_Ry) * self.rest) - self.masses[i] * self.g - self.damping*velocities[i,1]
+            self.f[i, 1] = - self.k * (diff_Ly + diff_Ry ) - self.masses[i] * self.g - self.damping*velocities[i,1]
 
 	#update forces for climber (mass M )
         diff_Lx = pos[-1, 0] - pos[-2, 0]
         diff_Ly = pos[-1, 1] - pos[-2, 1]
 
-        self.f[-1, 0] = - self.k * (diff_Lx - np.sign(diff_Lx) * self.rest) - self.damping*velocities[-1,0] 
-        self.f[-1, 1] = - self.k * (diff_Ly - np.sign(diff_Ly) * self.rest) - self.masses[-1] * self.g -self.damping*velocities[-1,1]
+        self.f[-1, 0] = - self.k * (diff_Lx ) - self.damping*velocities[-1,0] 
+        self.f[-1, 1] = - self.k * (diff_Ly ) - self.masses[-1] * self.g -self.damping*velocities[-1,1]
 
     def update(self):
         state = np.array([self.pos, self.v])
@@ -114,7 +114,12 @@ class Rope:
         return state + (1/6)*(k1 + 2*k2 + 2*k3 + k4)
 
 def main():
-  rope = Rope(50, 5, 9.81, 5000, 10, 75, np.zeros(2), np.zeros(2), 0.001, 30, 0,)
+  segments = 50 
+  rope_weight = 5 
+  K = 5000
+  length_of_rope = 10 
+  mass_of_climber = 75 
+  rope = Rope(segments, rope_weight, 9.81, K,length_of_rope , mass_of_climber, np.zeros(2), np.zeros(2), 0.001, 20, 0,)
   rope.run()
   "plot"
   t = rope.timesteps + rope.inits
@@ -125,6 +130,7 @@ def main():
   y = y[0:, 1]
   
   plt.plot(x, y)
+  plt.title(f"segments = {segments}, rope weight = {rope_weight}, K = {K}, rope L = {length_of_rope}, M = {mass_of_climber}")
   plt.axhline(0, color = 'r', linestyle='--')
   plt.show()
 
