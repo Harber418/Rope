@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 class Rope:
 
     def __init__(self, n, m, g, k, rest_L, M, M_pos, anchor, dt, time, inits,
-                 damping=0.3, moisture_content=0.0):
+                 damping=0.75, moisture_content=0.0):
 
         self.dt = dt
         self.inits = inits
@@ -15,11 +15,13 @@ class Rope:
         self.alpha = 1.0
         self.gamma = dt * 0.5
 
+        #this doesnt mean we cant run the simulation just that the rope is streached from the start
         rope_vector = M_pos - anchor
         distance = np.linalg.norm(rope_vector)
         if distance > rest_L:
             print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
 
+        #i think this is a mistake but perhaps it is correct not too sure 
         mx_pos = np.linspace(anchor[0], M_pos[0], n)
         my_pos = np.linspace(anchor[1], M_pos[1], n)
         self.pos = np.array([mx_pos, my_pos]).T
@@ -68,9 +70,7 @@ class Rope:
             if step % 100 == 0:
                 print(step, end="\r")
 
-            if np.linalg.norm(self.f[-1]) > 1e7:
-                print(f"the rope has broken at timestep {step} due to a force of {np.linalg.norm(self.f[-1])}")
-                break
+            
 
     def forces(self, pos, velocities):
         self.f = np.zeros([self.n, 2])
@@ -89,6 +89,7 @@ class Rope:
 
         self.f[-1, 0] = -self.k * diff_Lx - self.damping * velocities[-1, 0]
         self.f[-1, 1] = -self.k * diff_Ly - self.masses[-1] * self.g - self.damping * velocities[-1, 1]
+
 
     def force_rest(self, pos, velocities):
         self.f = np.zeros([self.n, 2])
@@ -111,28 +112,35 @@ class Rope:
             self.f[i] += force_left
             self.f[i - 1] -= force_left
 
-            right_vector = pos[i + 1] - pos[i]
-            length_R = np.linalg.norm(right_vector)
-            unit_right = right_vector / length_R if length_R != 0 else right_vector
-            extension_R = length_R - self.rest
+            #right_vector = pos[i + 1] - pos[i]
+            #length_R = np.linalg.norm(right_vector)
+            #unit_right = right_vector / length_R if length_R != 0 else right_vector
+            #extension_R = length_R - self.rest
 
-            if length_R < self.rest:
-                K = self.k
-            elif length_R < 1.4 * self.rest:
-                K = self.k * (length_R / self.rest) ** 2 * self.alpha
-            else:
-                K = self.k * (length_R / self.rest) ** 2 * self.alpha + 1000 * (length_R / self.rest)
+            #if length_R < self.rest:
+            #    K = self.k
+            #elif length_R < 1.4 * self.rest:
+            #    K = self.k * (length_R / self.rest) ** 2 * self.alpha
+            #else:
+            #    K = self.k * (length_R / self.rest) ** 2 * self.alpha + 1000 * (length_R / self.rest)
 
-            force_right = -K * extension_R * unit_right
-            self.f[i] += force_right
-            self.f[i + 1] -= force_right
+            #force_right = -K * extension_R * unit_right
+            #self.f[i] += force_right
+            #self.f[i + 1] -= force_right
 
+            #here we add damping and gravity forces
             v_rel = velocities[i] - velocities[i - 1]
             damping_force = -(self.k + self.moist) * np.dot(v_rel, unit_left) * unit_left
             gravity_force = np.array([0, -self.masses[i] * self.g])
 
             self.f[i] += damping_force + gravity_force
 
+            #break if rope force is too great at any given segment 
+            if np.linalg.norm(self.f[i]) > 1e7:
+                print(f"the rope has broken at timestep {step} due to a force of {np.linalg.norm(self.f[i])}")
+                break
+
+            #when the rope is no longer wet stop reducing water content 
             if self.moist < 0.01:
                 self.gamma = 0
 
@@ -141,6 +149,7 @@ class Rope:
             if length_R > self.rest:
                 self.moist -= (self.gamma * (length_R / self.rest) ** 2) / self.n
 
+        #this is the force for the climber 
         vector = pos[-2] - pos[-1]
         length = np.linalg.norm(vector)
         unit = vector / length if length != 0 else vector
@@ -214,7 +223,7 @@ def main():
     plt.axhline(0, color="r", linestyle="--")
     plt.show()
 
-    plot_force(rope.f_hist, x, length_of_rope, mass_of_climber)
+    #plot_force(rope.f_hist, x, length_of_rope, mass_of_climber)
 
 
 if __name__ == "__main__":
