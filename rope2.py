@@ -1,0 +1,165 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+class Rope:
+
+    def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
+                 damping=0, moisture_content=0.0):
+
+        n = N + 2 # number of masses plus the climber and the anchor
+        self.dt = dt
+        self.timesteps = int(time / self.dt)
+        self.moist = moisture_content
+        self.damping = damping
+        self.alpha = 1.0
+        self.gamma = dt * 0.5
+
+        #this doesnt mean we cant run the simulation just that the rope is streached from the start
+        if np.linalg.norm(M_pos - anchor) > rest_L:
+            print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
+
+        #i think this is a mistake but perhaps it is correct not too sure # what is a mistake?
+        mx_pos = np.linspace(anchor[0], M_pos[0], n)
+        my_pos = np.linspace(anchor[1], M_pos[1], n)
+        self.pos = np.array([mx_pos, my_pos]).T
+
+        self.masses = np.ones(n) * m / N + self.moist * 0.4 * (np.ones(n) * m / N)
+        self.masses[-1] = M
+
+        self.v = np.zeros([n, 2])
+
+        self.n = n
+        self.g = g
+        self.k = k
+        self.l0 = rest_L / N
+        self.M_pos = M_pos
+        self.anchor = anchor
+
+        self.f_hist = []
+        self.p_hist = []
+        self.v_hist = []
+
+        self.f_hist.append(np.zeros((n, 2)))
+        self.p_hist.append(self.pos)
+        self.v_hist.append(self.v)
+
+    def run(self):
+        for i in range(self.timesteps):
+            self.update()
+            self.f_hist.append(self.f)
+            self.p_hist.append(self.pos.copy())
+            self.v_hist.append(self.v.copy())
+
+            if i % 100 == 0:
+                print(i, end="\r")
+
+    def spring_force(self, ri, rj, vi, vj):
+        dx = rj - ri
+        l = np.linalg.norm(dx)
+        if l == 0:
+            return np.zeros(2)
+
+        n_hat = dx / l
+
+        # elastic force magnitude (Hooke)
+        Fs_mag = self.k * (l - self.l0)
+
+        # relative velocity along spring direction
+        v_rel = np.dot(vj - vi, n_hat)
+
+        # damping magnitude: must oppose relative motion
+        Fd_mag = self.damping * v_rel
+
+        # total force on i from j
+        return (Fs_mag + Fd_mag) * n_hat
+
+
+            
+    def forces(self, pos, velocities):
+        f = np.zeros((self.n, 2))
+
+        # must start at anchor to find L force on first mass
+        for i in range(self.n - 1):
+            F = self.spring_force(
+                pos[i],
+                pos[i + 1],
+                velocities[i],
+                velocities[i + 1]
+            )
+
+            # Newton's third law
+            f[i] += F
+            f[i + 1] -= F
+
+        # gravity
+        for i in range(self.n):
+            f[i, 1] -= self.masses[i] * self.g
+
+        return f
+
+
+    def update(self):
+        # Enforce anchor constraint before integration
+        self.pos[0] = self.anchor
+        self.v[0] = np.zeros(2)
+        
+        state = np.array([self.pos, self.v])
+        new_state = self.rk4(state)
+        self.pos = new_state[0]
+        self.v = new_state[1]
+        
+        # Enforce anchor constraint after integration
+        self.pos[0] = self.anchor
+        self.v[0] = np.zeros(2)
+
+        # Calculate self.f once for history tracking
+        self.f = self.forces(self.pos, self.v)
+
+    def derivatives(self, state, tracker):
+        positions, velocities = state
+        forces = self.forces(positions, velocities)
+        acceleration = forces / self.masses[:, None]
+
+        if tracker:
+            self.f = forces
+
+        return np.array([velocities, acceleration])
+
+    def rk4(self, state):
+        k1 = self.dt * self.derivatives(state, True)
+        k2 = self.dt * self.derivatives(state + 0.5 * k1, False)
+        k3 = self.dt * self.derivatives(state + 0.5 * k2, False)
+        k4 = self.dt * self.derivatives(state + k3, False)
+        return state + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+    
+def main():
+    segments = 50
+    rope_weight = 5
+    K = 10000
+    length_of_rope = 10
+    mass_of_climber = 75
+
+    anchor = np.zeros(2)
+    climber_position = np.array([0, 0])  # Hang rope vertically
+
+    rope = Rope(
+        segments, rope_weight, 9.81, K,
+        length_of_rope, mass_of_climber,
+        climber_position, anchor,
+        0.001, 60, 0, 0  # Reduced timestep
+    )
+
+    rope.run()
+
+    t = rope.timesteps
+    x = np.linspace(0, t * rope.dt, t + 1)
+
+    y = np.array(rope.p_hist)[:, -1, 1]
+
+    plt.plot(x, y)
+    plt.axhline(0, color="r", linestyle="--")
+    plt.show()
+
+    
+if __name__ == "__main__":
+    main()
