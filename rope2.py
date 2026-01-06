@@ -31,7 +31,7 @@ class Rope:
         self.n = n
         self.g = g
         self.k = k
-        self.l0 = rest_L / N
+        self.l0 = rest_L / (N + 1)  # N+1 springs between N+2 masses
         self.M_pos = M_pos
         self.anchor = anchor
 
@@ -94,15 +94,12 @@ class Rope:
         # gravity
         for i in range(self.n):
             f[i, 1] -= self.masses[i] * self.g
+            # considering adding air resistance here later to increase global damping
 
         return f
 
 
     def update(self):
-        # Enforce anchor constraint before integration
-        self.pos[0] = self.anchor
-        self.v[0] = np.zeros(2)
-        
         state = np.array([self.pos, self.v])
         new_state = self.rk4(state)
         self.pos = new_state[0]
@@ -132,21 +129,15 @@ class Rope:
         k4 = self.dt * self.derivatives(state + k3, False)
         return state + (k1 + 2 * k2 + 2 * k3 + k4) / 6
     
-def main():
-    segments = 50
-    rope_weight = 5
-    K = 10000
-    length_of_rope = 10
-    mass_of_climber = 75
+def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, damping, moisture):
 
     anchor = np.zeros(2)
-    climber_position = np.array([0, 0])  # Hang rope vertically
 
     rope = Rope(
         segments, rope_weight, 9.81, K,
         length_of_rope, mass_of_climber,
         climber_position, anchor,
-        0.001, 60, 0, 0  # Reduced timestep
+        0.001, time, damping, moisture  # Reduced timestep
     )
 
     rope.run()
@@ -162,4 +153,4 @@ def main():
 
     
 if __name__ == "__main__":
-    main()
+    main(50, 5, 16000, 30, 75, np.array([0.001, 9.9]), 20, 10, 0)
