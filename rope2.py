@@ -4,13 +4,14 @@ import matplotlib.pyplot as plt
 class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
-                 damping=0, moisture_content=0.0):
+                 damping=0, moisture_content=0.0, air_resistance=0):
 
         n = N + 2 # number of masses plus the climber and the anchor
         self.dt = dt
         self.timesteps = int(time / self.dt)
         self.moist = moisture_content
         self.damping = damping
+        self.air_resistance = air_resistance
         self.alpha = 1.0
         self.gamma = dt * 0.5
 
@@ -56,22 +57,28 @@ class Rope:
     def spring_force(self, ri, rj, vi, vj):
         dx = rj - ri
         l = np.linalg.norm(dx)
-        if l == 0:
-            return np.zeros(2)
 
+        if l == 0:
+            return np.zeros(2), np.zeros(2)
+        # rope does not resist compression
+        elif l <= self.l0:
+            return np.zeros(2), np.zeros(2)
+
+        # unit vector along spring
         n_hat = dx / l
 
         # elastic force magnitude (Hooke)
         Fs_mag = self.k * (l - self.l0)
+        F_elastic = Fs_mag * n_hat
 
         # relative velocity along spring direction
         v_rel = np.dot(vj - vi, n_hat)
 
-        # damping magnitude: must oppose relative motion
-        Fd_mag = self.damping * v_rel
+        # damping force on mass i (opposes relative motion)
+        F_damping = self.damping * v_rel * n_hat
 
-        # total force on i from j
-        return (Fs_mag + Fd_mag) * n_hat
+        # return elastic and damping forces on mass i
+        return F_elastic, F_damping
 
 
             
@@ -80,21 +87,24 @@ class Rope:
 
         # must start at anchor to find L force on first mass
         for i in range(self.n - 1):
-            F = self.spring_force(
+            F_e, F_d = self.spring_force(
                 pos[i],
                 pos[i + 1],
                 velocities[i],
                 velocities[i + 1]
             )
 
-            # Newton's third law
-            f[i] += F
-            f[i + 1] -= F
+            # Newton's third law 
+            f[i] += (F_e + F_d)
+            f[i + 1] -= (F_e + F_d)
+        
 
         # gravity
         for i in range(self.n):
             f[i, 1] -= self.masses[i] * self.g
-            # considering adding air resistance here later to increase global damping
+            
+            # air resistance (drag proportional to velocity)
+            f[i] -= self.air_resistance * velocities[i]
 
         return f
 
@@ -129,7 +139,27 @@ class Rope:
         k4 = self.dt * self.derivatives(state + k3, False)
         return state + (k1 + 2 * k2 + 2 * k3 + k4) / 6
     
-def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, damping, moisture):
+    def plot_kinetic_energy(self):
+        """Plot total kinetic energy of the system over time"""
+        KE_total = []
+        
+        for velocities in self.v_hist:
+            # Calculate KE for each mass: 0.5 * m * v^2
+            v_squared = np.sum(velocities**2, axis=1)  # |v|^2 for each mass
+            KE = 0.5 * self.masses * v_squared
+            KE_total.append(np.sum(KE))
+        
+        time = np.linspace(0, self.timesteps * self.dt, len(KE_total))
+        
+        plt.figure(figsize=(10, 6))
+        plt.plot(time, KE_total, linewidth=1.5)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Total Kinetic Energy (J)')
+        plt.title('Total Kinetic Energy vs Time')
+        plt.grid(True, alpha=0.3)
+        plt.show()
+    
+def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, damping, moisture, air_resistance=0):
 
     anchor = np.zeros(2)
 
@@ -137,7 +167,7 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
         segments, rope_weight, 9.81, K,
         length_of_rope, mass_of_climber,
         climber_position, anchor,
-        0.001, time, damping, moisture  # Reduced timestep
+        0.001, time, damping, moisture, air_resistance  # Reduced timestep
     )
 
     rope.run()
@@ -151,6 +181,8 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     plt.axhline(0, color="r", linestyle="--")
     plt.show()
 
+    rope.plot_kinetic_energy()
+
     
 if __name__ == "__main__":
-    main(50, 5, 16000, 30, 75, np.array([0.001, 9.9]), 20, 10, 0)
+    main(50, 5, 20000, 10, 75, np.array([0, 10]), 40, 20, 0, 1)
