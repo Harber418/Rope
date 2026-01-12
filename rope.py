@@ -267,7 +267,7 @@ class Rope:
         #fall_factor = rope_vector[1]/np.linalg.norm(low_point)
         return fall_factor
     
-def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, damping, moisture, air_resistance=0, live_animation=False):
+def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0, live_animation=False):
 
     anchor = np.zeros(2)
 
@@ -275,7 +275,7 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
         segments, rope_weight, 9.81, K,
         length_of_rope, mass_of_climber,
         climber_position, anchor,
-        0.001, time, damping, moisture, air_resistance  # Reduced timestep
+        dt, time, damping, moisture, air_resistance  # Reduced timestep
     )
 
     if live_animation:
@@ -299,6 +299,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 20000, 10, 75, np.array([0, 5]), 30, 20, 0, 1, True)
+    main(50, 5, 8700, 10, 75, np.array([0, 5]), 30, 0.0001, 400, 0, 0, True)
 
 
