@@ -20,11 +20,12 @@ class Rope:
         if np.linalg.norm(M_pos - anchor) > rest_L:
             print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
         self.theta=theta
-        if theta = 90.0:
-            anlge = False
+        
+        if theta == 90.0:
+            angle= False
         else:
-            anlge = True 
-
+            angle = True 
+        self.angle=angle
         #i think this is a mistake but perhaps it is correct not too sure # what is a mistake?
         mx_pos = np.linspace(anchor[0], M_pos[0], n)
         my_pos = np.linspace(anchor[1], M_pos[1], n)
@@ -165,11 +166,11 @@ class Rope:
         plt.grid(True, alpha=0.3)
         plt.show()
     
-    def wall(self, anlge):
+    def wall(self):
     	"""if the climber hits the wall thier should be a change of momentum
     	I think keeping this just for the climber and not the whole rope is good enough, 
     	may cost too much to do it for the whole rope"""
-    	if anlge:
+    	if self.angle:
     		#find if the climber is in the wall
     		ywall = (self.pos[-1,0]-self.anchor[0])*np.sin(self.theta) + self.anchor[1]
     		if self.pos[-1,1] > ywall
@@ -201,16 +202,18 @@ class Rope:
     	ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=400)
     	plt.show()
     	
+    def fall_factor_normal(self):
+        
     	
     def Fall_factor_calc(self):
     	#idea for what fall factor could be 
     	#the ratio of max hight - min height to the anchor height - min height
-    	low_point = np.min(self.pos[:,-1,1])
-    	initial_fall_height =(self.pos[0,-1,1])
+    	low_point = np.min(self.p_hist[:,-1,1])
+    	initial_fall_height =(self.p_hist[0,-1,1])
     	total_fall = initial_fall_height -low_point
-    	iii = np.abs(self.anchor[1] - low_point)
+    	streached_rope_length = np.abs(self.anchor[1] - low_point)
     	
-    	fall_factor = total_fall/iii
+    	fall_factor = total_fall/streached_rope_length
     	#idk what this is but i don't want to get rid of it uncase its useful lol
 	#rope_vector = self.M_pos - self.anchor
 	#low_point = np.array([self.anchor[0], (self.anchor[1]-self.rest_L)])
