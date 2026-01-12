@@ -173,7 +173,7 @@ class Rope:
     	if self.angle:
     		#find if the climber is in the wall
     		ywall = (self.pos[-1,0]-self.anchor[0])*np.sin(self.theta) + self.anchor[1]
-    		if self.pos[-1,1] > ywall
+    		if self.pos[-1,1] > ywall:
     			self.v[-1] = - self.v[-1]
     			
     	#could add the wall into the animation as a static line. probably just generate some values and plot.
@@ -199,11 +199,11 @@ class Rope:
     		y = np.array(rope.p_hist)[i,-1, 1]
     		container = ax.scatter(x,y, color='b')
     		artists.append(container)
-    	ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=400)
+    	ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=10)
     	plt.show()
     	
     def fall_factor_normal(self):
-        
+
     	
     def Fall_factor_calc(self):
     	#idea for what fall factor could be 
@@ -244,8 +244,11 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     rope.plot_kinetic_energy()
     #rope.scatter_position()
+    rope.gif()
     
 
     
 if __name__ == "__main__":
     main(50, 5, 20000, 10, 75, np.array([0, 10]), 40, 20, 0, 1)
+
+
