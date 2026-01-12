@@ -167,58 +167,48 @@ class Rope:
         plt.show()
     
     def wall(self):
-    	"""if the climber hits the wall thier should be a change of momentum
-    	I think keeping this just for the climber and not the whole rope is good enough, 
-    	may cost too much to do it for the whole rope"""
-    	if self.angle:
-    		#find if the climber is in the wall
-    		ywall = (self.pos[-1,0]-self.anchor[0])*np.sin(self.theta) + self.anchor[1]
-    		if self.pos[-1,1] > ywall:
-    			self.v[-1] = - self.v[-1]
+        """if the climber hits the wall thier should be a change of momentum
+        I think keeping this just for the climber and not the whole rope is good enough, 
+        may cost too much to do it for the whole rope"""
+        if self.angle:
+            #find if the climber is in the wall
+            ywall = (self.pos[-1,0]-self.anchor[0])*np.sin(self.theta) + self.anchor[1]
+            if self.pos[-1,1] > ywall:
+                self.v[-1] = - self.v[-1]
+                
+        #could add the wall into the animation as a static line. probably just generate some values and plot.
     			
-    	#could add the wall into the animation as a static line. probably just generate some values and plot.
-    			
-    def scatter_position(self):
-    	"""plots the postion of the climber as time goes on, I think this should be animated"""
-    	t = rope.timesteps
-   	time = np.linspace(0, t * rope.dt, t + 1)
-   	x = np.array(rope.p_hist)[:,-1,0]
-
-    	y = np.array(rope.p_hist)[:, -1, 1]
-    	
-    	plt.scatter(x,y)
-    	plt.show()
-    	
+ 
     def gif(self):
-    	"""a 2D animation for the climber falling,"""
-    	fig, ax = plt.subplots()
-    	artists =[]
-    	colors = ['tab:blue', 'tab:purple','tab:red']
-    	for i in range(self.timesteps):
-    		x = np.array(rope.p_hist)[i,-1,0]
-    		y = np.array(rope.p_hist)[i,-1, 1]
-    		container = ax.scatter(x,y, color='b')
-    		artists.append(container)
-    	ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=10)
-    	plt.show()
-    	
-    def fall_factor_normal(self):
+        """a 2D animation for the climber falling,"""
+        fig, ax = plt.subplots()
+        artists =[]
+        colors = ['tab:blue', 'tab:purple','tab:red']
+        for i in range(self.timesteps):
+            x = np.array(self.p_hist)[i,-1,0]
+            y = np.array(self.p_hist)[i,-1, 1]
+            container = ax.scatter(x,y, color='b')
+            artists.append(container)
+        ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=10)
+        plt.show()
+        
+   # def fall_factor_normal(self):
 
-    	
+        
     def Fall_factor_calc(self):
-    	#idea for what fall factor could be 
-    	#the ratio of max hight - min height to the anchor height - min height
-    	low_point = np.min(self.p_hist[:,-1,1])
-    	initial_fall_height =(self.p_hist[0,-1,1])
-    	total_fall = initial_fall_height -low_point
-    	streached_rope_length = np.abs(self.anchor[1] - low_point)
-    	
-    	fall_factor = total_fall/streached_rope_length
-    	#idk what this is but i don't want to get rid of it uncase its useful lol
-	#rope_vector = self.M_pos - self.anchor
-	#low_point = np.array([self.anchor[0], (self.anchor[1]-self.rest_L)])
-	#fall_factor = rope_vector[1]/np.linalg.norm(low_point)
-	return fall_factor
+        #idea for what fall factor could be 
+        #the ratio of max hight - min height to the anchor height - min height
+        low_point = np.min(self.p_hist[:,-1,1])
+        initial_fall_height =(self.p_hist[0,-1,1])
+        total_fall = initial_fall_height -low_point
+        stretched_rope_length = np.abs(self.anchor[1] - low_point)
+        
+        fall_factor = total_fall/stretched_rope_length
+        #idk what this is but i don't want to get rid of it uncase its useful lol
+        #rope_vector = self.M_pos - self.anchor
+        #low_point = np.array([self.anchor[0], (self.anchor[1]-self.rest_L)])
+        #fall_factor = rope_vector[1]/np.linalg.norm(low_point)
+        return fall_factor
     
 def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, damping, moisture, air_resistance=0):
 
@@ -249,6 +239,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 20000, 10, 75, np.array([0, 10]), 40, 20, 0, 1)
+    main(50, 5, 20000, 10, 75, np.array([0, 5]), 30, 20, 0, 1)
 
 
