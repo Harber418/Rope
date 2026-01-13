@@ -175,7 +175,7 @@ class Rope:
 
     def update(self):
         state = np.array([self.pos, self.v])
-        new_state = self.rk4(state)
+        new_state = self.method(state)
         self.pos = new_state[0]
         self.v = new_state[1]
         
@@ -196,7 +196,8 @@ class Rope:
 
         return np.array([velocities, acceleration])
 
-    def rk4(self, state):
+    def method(self, state):
+        """use the rk4 method to update the state"""
         k1 = self.dt * self.derivatives(state, True)
         k2 = self.dt * self.derivatives(state + 0.5 * k1, False)
         k3 = self.dt * self.derivatives(state + 0.5 * k2, False)
@@ -299,6 +300,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 8700, 10, 75, np.array([0, 5]), 30, 0.0001, 400, 0, 0, True)
+    main(50, 5, 30000, 10, 75, np.array([0, 5]), 30, 0.001, 30, 0, 0, True)
 
 
