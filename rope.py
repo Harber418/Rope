@@ -234,19 +234,36 @@ class Rope:
             norms = np.linalg.norm(rope_forces, axis=1)
             avg_force = np.mean(norms)
             total_force = np.sum(norms)
-            avg_forces.append(avg_force)
             total_forces.append(total_force)
+            avg_forces.append(avg_force)
 
-        time = np.arange(len(avg_forces)) * self.dt
-        
+        time_average = np.arange(len(avg_forces)) * self.dt
+        time_total = np.arange(len(total_forces)) * self.dt
+        smooth = True 
+        # the switch to make th force graph look smooth, this helps see the trend better without fluctuations 
+        if smooth:
+            smoothest_forces = []
+            smooth_forces = []
+            for i in range(len(avg_forces)):
+                smooth_forces.append(total_forces[i])
+                if i % 10 == 0:
+                    # do something every 3 steps
+                    mens = np.mean(smooth_forces)
+                    smoothest_forces.append(mens)
+                    smooth_forces = []
+            total_forces = smoothest_forces
+            time_total = np.arange(len(total_forces)) * self.dt * 10
+
+
+
         fig, axs = plt.subplots(1, 2, figsize=(14, 5), sharex=True)
-        axs[0].plot(time, avg_forces, linewidth=1.5)
+        axs[0].plot(time_average, avg_forces, linewidth=1.5)
         axs[0].set_xlabel('Time (s)')
         axs[0].set_ylabel('Average Rope Force (N)')
         axs[0].set_title('Average Rope Force vs Time (units: N, s)')
         axs[0].grid(True, alpha=0.3)
 
-        axs[1].plot(time, total_forces, color='tab:orange', linewidth=1.5)
+        axs[1].plot(time_total, total_forces, color='tab:orange', linewidth=1.5)
         axs[1].set_xlabel('Time (s)')
         axs[1].set_ylabel('Total Rope Force (N)')
         axs[1].set_title('Total Rope Force vs Time (units: N, s)')
@@ -332,11 +349,10 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     rope.plot_kinetic_energy()
     #rope.scatter_position()
-    #rope.gif()
+    rope.rope_force()
     
 
     
 if __name__ == "__main__":
-    main(50, 5, 8700, 10, 75, np.array([0, 5]), 30, 0.0001, 400, 0, 0, True)
-
+    main(50, 5, 30000, 10, 80, np.array([0, 5]), 5, 0.001, 50, 0, 1.0, True)
 
