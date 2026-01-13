@@ -75,9 +75,9 @@ class Rope:
         
         ax.set_xlabel('X Position (m)')
         ax.set_ylabel('Y Position (m)')
-        ax.set_title('Live Rope Simulation')
+        ax.set_title('Live Rope Simulation (units: m, s, kg)')
         ax.grid(True, alpha=0.3)
-        ax.axhline(self.anchor[1], color='gray', linestyle='--', alpha=0.5, label='Anchor Level')
+        ax.axhline(self.anchor[1], color='gray', linestyle='--', alpha=0.5, label='Anchor Level (m)')
         
         # Initialize plot elements
         rope_line, = ax.plot([], [], 'b-', linewidth=2, label='Rope')
@@ -175,7 +175,7 @@ class Rope:
 
     def update(self):
         state = np.array([self.pos, self.v])
-        new_state = self.method(state)
+        new_state = self.rk4(state)
         self.pos = new_state[0]
         self.v = new_state[1]
         
@@ -196,8 +196,7 @@ class Rope:
 
         return np.array([velocities, acceleration])
 
-    def method(self, state):
-        """use the rk4 method to update the state"""
+    def rk4(self, state):
         k1 = self.dt * self.derivatives(state, True)
         k2 = self.dt * self.derivatives(state + 0.5 * k1, False)
         k3 = self.dt * self.derivatives(state + 0.5 * k2, False)
@@ -220,10 +219,42 @@ class Rope:
         plt.plot(time, KE_total, linewidth=1.5)
         plt.xlabel('Time (s)')
         plt.ylabel('Total Kinetic Energy (J)')
-        plt.title('Total Kinetic Energy vs Time')
+        plt.title('Total Kinetic Energy vs Time (units: J, s, kg, m)')
         plt.grid(True, alpha=0.3)
         plt.show()
     
+    def rope_force(self):
+        """a function to plot the average force in the rope at each step in the simulation"""
+        avg_forces = []
+        total_forces = []
+        for forces in self.f_hist:
+            # no anchor no climber 
+            rope_forces = forces[1:-1]
+            # axis=1 is used as forces are in 2D
+            norms = np.linalg.norm(rope_forces, axis=1)
+            avg_force = np.mean(norms)
+            total_force = np.sum(norms)
+            avg_forces.append(avg_force)
+            total_forces.append(total_force)
+
+        time = np.arange(len(avg_forces)) * self.dt
+        
+        fig, axs = plt.subplots(1, 2, figsize=(14, 5), sharex=True)
+        axs[0].plot(time, avg_forces, linewidth=1.5)
+        axs[0].set_xlabel('Time (s)')
+        axs[0].set_ylabel('Average Rope Force (N)')
+        axs[0].set_title('Average Rope Force vs Time (units: N, s)')
+        axs[0].grid(True, alpha=0.3)
+
+        axs[1].plot(time, total_forces, color='tab:orange', linewidth=1.5)
+        axs[1].set_xlabel('Time (s)')
+        axs[1].set_ylabel('Total Rope Force (N)')
+        axs[1].set_title('Total Rope Force vs Time (units: N, s)')
+        axs[1].grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.show()
+
     def wall(self):
         """if the climber hits the wall thier should be a change of momentum
         I think keeping this just for the climber and not the whole rope is good enough, 
@@ -247,6 +278,9 @@ class Rope:
             y = np.array(self.p_hist)[i,-1, 1]
             container = ax.scatter(x,y, color='b')
             artists.append(container)
+        ax.set_xlabel('X Position (m)')
+        ax.set_ylabel('Y Position (m)')
+        ax.set_title('Climber Position Over Time (units: m, s, kg)')
         ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=10)
         plt.show()
         
@@ -291,6 +325,9 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     plt.plot(x, y)
     plt.axhline(0, color="r", linestyle="--")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Climber Y Position (m)')
+    plt.title('Climber Y Position vs Time (units: m, s, kg)')
     plt.show()
 
     rope.plot_kinetic_energy()
@@ -300,6 +337,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 75, np.array([0, 5]), 30, 0.001, 30, 0, 0, True)
+    main(50, 5, 8700, 10, 75, np.array([0, 5]), 30, 0.0001, 400, 0, 0, True)
 
 
