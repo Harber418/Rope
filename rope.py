@@ -54,6 +54,7 @@ class Rope:
     def run(self):
         for i in range(self.timesteps):
             self.update()
+            
             self.f_hist.append(self.f)
             self.p_hist.append(self.pos.copy())
             self.v_hist.append(self.v.copy())
@@ -83,6 +84,9 @@ class Rope:
         rope_line, = ax.plot([], [], 'b-', linewidth=2, label='Rope')
         climber_point, = ax.plot([], [], 'ro', markersize=10, label='Climber')
         anchor_point, = ax.plot(self.anchor[0], self.anchor[1], 'ks', markersize=12, label='Anchor')
+        if self.angle:
+            wall_x, wall_y = self.wall()
+            ax.plot(wall_x, wall_y, color='k', linestyle='--', label='wall')
         time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, 
                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
         
@@ -90,6 +94,7 @@ class Rope:
         
         for i in range(self.timesteps):
             self.update()
+            self.wall()
             self.f_hist.append(self.f)
             self.p_hist.append(self.pos.copy())
             self.v_hist.append(self.v.copy())
@@ -273,18 +278,27 @@ class Rope:
         plt.show()
 
     def wall(self):
-        """if the climber hits the wall thier should be a change of momentum
-        I think keeping this just for the climber and not the whole rope is good enough, 
-        may cost too much to do it for the whole rope"""
+        """Reflect the climber's velocity if they hit the wall (momentum change)."""
         if self.angle:
-            #find if the climber is in the wall
-            ywall = (self.pos[-1,0]-self.anchor[0])*np.sin(self.theta) + self.anchor[1]
-            if self.pos[-1,1] > ywall:
-                self.v[-1] = - self.v[-1]
-                
-        #could add the wall into the animation as a static line. probably just generate some values and plot.
-    			
- 
+            # Wall: y = tan(theta) * (x - anchor_x) + anchor_y
+            theta_rad = np.deg2rad(self.theta) if self.theta > 2 * np.pi else self.theta
+            x_c, y_c = self.pos[-1, 0], self.pos[-1, 1]
+            ywall = np.tan(theta_rad) * (x_c - self.anchor[0]) + self.anchor[1]
+            # Wall normal vector (perpendicular to wall)
+            n = np.array([-np.sin(theta_rad), np.cos(theta_rad)])
+            v = self.v[-1]
+            # Only reflect if the climber is past the wall and moving into the wall
+            if y_c > ywall and np.dot(v, n) > 0:
+                v_n = np.dot(v, n) * n  # normal component
+                v_t = v - v_n           # tangential component
+                restitution = 1.0       # 1.0 = elastic, <1.0 = inelastic
+                self.v[-1] = v_t - restitution * v_n
+
+        wall_x = np.array([self.anchor[0]-10 ,self.anchor[0], self.anchor[0] + 10])
+        wall_y = np.array([self.anchor[1] - 10*np.tan(theta_rad),self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
+        #ax.plot(wall_x, wall_y, color='k', linestyle='--')
+        return (wall_x, wall_y)
+
     def gif(self):
         """a 2D animation for the climber falling,"""
         fig, ax = plt.subplots()
@@ -354,5 +368,5 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 80, np.array([0, 5]), 5, 0.001, 50, 0, 1.0, True)
+    main(50, 5, 30000, 10, 80, np.array([5, 0]), 5, 0.001, 50, 0, 1.0, True)
 
