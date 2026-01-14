@@ -297,6 +297,8 @@ class Rope:
         wall_x = np.array([self.anchor[0]-10 ,self.anchor[0], self.anchor[0] + 10])
         wall_y = np.array([self.anchor[1] - 10*np.tan(theta_rad),self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
         #ax.plot(wall_x, wall_y, color='k', linestyle='--')
+        #need to add some damping so that when the cliber hits the wall they absorbe the force,
+        #maybe like damping of 0.8 * velocity into the wall, maybe only relflect like 20% of the energy.
         return (wall_x, wall_y)
 
     def gif(self):
