@@ -57,7 +57,7 @@ class Rope:
             if i % 100 == 0:
                 print(i, end="\r")
     
-    def run_with_live_animation(self, update_interval=10):
+    def run_with_live_animation(self, update_interval=50):
         """Run the simulation with live animation of the climber's position"""
         plt.ion()  # Turn on interactive mode
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -369,5 +369,5 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 80, np.array([5, 0]), 5, 0.001, 50, 0, 1.0, True)
+    main(50, 5, 30000, 10, 80, np.array([0, 10]), 10, 0.001, 40, 0, 1.0, True)
 
