@@ -360,9 +360,10 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     plt.show()
 
     rope.plot_kinetic_energy()
-    #rope.scatter_position()
+  
     rope.rope_force()
-    
+    #ff = rope.Fall_factor_calc()
+    #print(f"fall factor is {ff}")
 
     
 if __name__ == "__main__":
