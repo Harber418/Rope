@@ -5,7 +5,7 @@ import matplotlib.animation as animation
 class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
-                 damping=0, moisture_content=0.0, air_resistance=0, theta=90.0):
+                 damping=0, moisture_content=0.0, air_resistance=0, theta=90.0, angle = False):
 
         n = N + 2 # number of masses plus the climber and the anchor
         self.dt = dt
@@ -20,11 +20,6 @@ class Rope:
         if np.linalg.norm(M_pos - anchor) > rest_L:
             print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
         self.theta=theta
-        
-        if theta == 90.0:
-            angle= False
-        else:
-            angle = True 
         self.angle=angle
         #i think this is a mistake but perhaps it is correct not too sure # what is a mistake?
         mx_pos = np.linspace(anchor[0], M_pos[0], n)
@@ -94,7 +89,8 @@ class Rope:
         
         for i in range(self.timesteps):
             self.update()
-            self.wall()
+            if self.angle:
+                self.wall()
             self.f_hist.append(self.f)
             self.p_hist.append(self.pos.copy())
             self.v_hist.append(self.v.copy())
@@ -180,7 +176,7 @@ class Rope:
 
     def update(self):
         state = np.array([self.pos, self.v])
-        new_state = self.rk4(state)
+        new_state = self.method(state)
         self.pos = new_state[0]
         self.v = new_state[1]
         
@@ -201,7 +197,7 @@ class Rope:
 
         return np.array([velocities, acceleration])
 
-    def rk4(self, state):
+    def method(self, state):
         k1 = self.dt * self.derivatives(state, True)
         k2 = self.dt * self.derivatives(state + 0.5 * k1, False)
         k3 = self.dt * self.derivatives(state + 0.5 * k2, False)
@@ -279,20 +275,20 @@ class Rope:
 
     def wall(self):
         """Reflect the climber's velocity if they hit the wall (momentum change)."""
-        if self.angle:
-            # Wall: y = tan(theta) * (x - anchor_x) + anchor_y
-            theta_rad = np.deg2rad(self.theta) if self.theta > 2 * np.pi else self.theta
-            x_c, y_c = self.pos[-1, 0], self.pos[-1, 1]
-            ywall = np.tan(theta_rad) * (x_c - self.anchor[0]) + self.anchor[1]
-            # Wall normal vector (perpendicular to wall)
-            n = np.array([-np.sin(theta_rad), np.cos(theta_rad)])
-            v = self.v[-1]
-            # Only reflect if the climber is past the wall and moving into the wall
-            if y_c > ywall and np.dot(v, n) > 0:
-                v_n = np.dot(v, n) * n  # normal component
-                v_t = v - v_n           # tangential component
-                restitution = 1.0       # 1.0 = elastic, <1.0 = inelastic
-                self.v[-1] = v_t - restitution * v_n
+        
+        # Wall: y = tan(theta) * (x - anchor_x) + anchor_y
+        theta_rad = np.deg2rad(self.theta) if self.theta > 2 * np.pi else self.theta
+        x_c, y_c = self.pos[-1, 0], self.pos[-1, 1]
+        ywall = np.tan(theta_rad) * (x_c - self.anchor[0]) + self.anchor[1]
+        # Wall normal vector (perpendicular to wall)
+        n = np.array([-np.sin(theta_rad), np.cos(theta_rad)])
+        v = self.v[-1]
+        # Only reflect if the climber is past the wall and moving into the wall
+        if y_c > ywall and np.dot(v, n) > 0:
+            v_n = np.dot(v, n) * n  # normal component
+            v_t = v - v_n           # tangential component
+            restitution = 1.0       # 1.0 = elastic, <1.0 = inelastic
+            self.v[-1] = v_t - restitution * v_n
 
         wall_x = np.array([self.anchor[0]-10 ,self.anchor[0], self.anchor[0] + 10])
         wall_y = np.array([self.anchor[1] - 10*np.tan(theta_rad),self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
