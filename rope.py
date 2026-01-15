@@ -198,6 +198,7 @@ class Rope:
         return np.array([velocities, acceleration])
 
     def method(self, state):
+        #RK4 method for updating the state of the sytem 
         k1 = self.dt * self.derivatives(state, True)
         k2 = self.dt * self.derivatives(state + 0.5 * k1, False)
         k3 = self.dt * self.derivatives(state + 0.5 * k2, False)
@@ -255,8 +256,6 @@ class Rope:
             total_forces = smoothest_forces
             time_total = np.arange(len(total_forces)) * self.dt * 10
 
-
-
         fig, axs = plt.subplots(1, 2, figsize=(14, 5), sharex=True)
         axs[0].plot(time_average, avg_forces, linewidth=1.5)
         axs[0].set_xlabel('Time (s)')
@@ -287,14 +286,13 @@ class Rope:
         if y_c > ywall and np.dot(v, n) > 0:
             v_n = np.dot(v, n) * n  # normal component
             v_t = v - v_n           # tangential component
-            restitution = 1.0       # 1.0 = elastic, <1.0 = inelastic
-            self.v[-1] = v_t - restitution * v_n
+            collision_damping = 0.8       # 1.0 = elastic, <1.0 = inelastic
+            self.v[-1] = v_t - collision_damping * v_n
+            print(f"the climber hit the wall and damping factor is {collision_damping}")
 
         wall_x = np.array([self.anchor[0]-10 ,self.anchor[0], self.anchor[0] + 10])
         wall_y = np.array([self.anchor[1] - 10*np.tan(theta_rad),self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
-        #ax.plot(wall_x, wall_y, color='k', linestyle='--')
-        #need to add some damping so that when the cliber hits the wall they absorbe the force,
-        #maybe like damping of 0.8 * velocity into the wall, maybe only relflect like 20% of the energy.
+        
         return (wall_x, wall_y)
 
     def gif(self):
@@ -313,7 +311,11 @@ class Rope:
         ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=10)
         plt.show()
         
-   # def fall_factor_normal(self):
+    def fall_factor_normal(self):
+        #length of rope form anchor to ground 
+        l = 20 
+        fallf = l/self.rest_L
+        return fallf
 
         
     def Fall_factor_calc(self):
