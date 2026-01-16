@@ -5,7 +5,7 @@ import matplotlib.animation as animation
 class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
-                 damping=0, moisture_content=0.0, air_resistance=0, theta=90.0, angle = False):
+                 damping=0, moisture_content=0.0, air_resistance=0, theta=45.0, angle = True):
 
         n = N + 2 # number of masses plus the climber and the anchor
         self.dt = dt
@@ -369,6 +369,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 75, np.array([0, 5]), 30, 0.001, 30, 0, 0, True)
+    main(50, 5, 30000, 10, 75, np.array([-5, -5.5]), 30, 0.001, 30, 0, 0, True)
 
 
