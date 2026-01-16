@@ -46,16 +46,21 @@ class Rope:
         self.p_hist.append(self.pos)
         self.v_hist.append(self.v)
 
-    def run(self):
-        for i in range(self.timesteps):
-            self.update()
-            
-            self.f_hist.append(self.f)
-            self.p_hist.append(self.pos.copy())
-            self.v_hist.append(self.v.copy())
+        self.run(1) # =< 5 seconds to equilibriate
 
-            if i % 100 == 0:
-                print(i, end="\r")
+    def run(self, t):
+        """THIS IS THE EQUILIBRIATION FUNCTION"""
+        timesteps = t / self.dt
+        print(f"Equilibriating, please wait {t} seconds.")
+        for i in range(int(timesteps)):
+            self.update()
+            self.pos[-1] = self.M_pos
+            self.v[-1] = np.zeros(2)
+            
+            #self.f_hist.append(self.f)
+            #self.p_hist.append(self.pos.copy())
+            #self.v_hist.append(self.v.copy())
+
     
     def run_with_live_animation(self, update_interval=50):
         """Run the simulation with live animation of the climber's position"""
@@ -81,7 +86,7 @@ class Rope:
         anchor_point, = ax.plot(self.anchor[0], self.anchor[1], 'ks', markersize=12, label='Anchor')
         if self.angle:
             wall_x, wall_y = self.wall()
-            ax.plot(wall_x, wall_y, color='k', linestyle='--', label='wall')
+            ax.plot(wall_x, wall_y, color='k', label='wall')
         time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, 
                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
         
@@ -333,7 +338,7 @@ class Rope:
         #fall_factor = rope_vector[1]/np.linalg.norm(low_point)
         return fall_factor
     
-def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0, live_animation=False):
+def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0):
 
     anchor = np.zeros(2)
 
@@ -344,10 +349,7 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
         dt, time, damping, moisture, air_resistance  # Reduced timestep
     )
 
-    if live_animation:
-        rope.run_with_live_animation(update_interval=50)
-    else:
-        rope.run()
+    rope.run_with_live_animation(update_interval=50)
 
     t = rope.timesteps
     x = np.linspace(0, t * rope.dt, t + 1)
@@ -369,6 +371,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 75, np.array([-5, -5.5]), 30, 0.001, 30, 0, 0, True)
+    main(50, 5, 30000, 10, 75, np.array([5, 0]), 30, 0.001, 30, 0, 0)
 
 

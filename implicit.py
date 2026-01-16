@@ -52,7 +52,7 @@ class ImplicitRope(Rope):
         
         return np.array([new_positions, new_velocities])
     
-def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0, live_animation=False):
+def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0):
 
     anchor = np.zeros(2)
 
@@ -63,10 +63,7 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
         dt, time, damping, moisture, air_resistance
     )
 
-    if live_animation:
-        rope.run_with_live_animation(update_interval=50)
-    else:
-        rope.run()
+    rope.run_with_live_animation(update_interval=50)
 
     t = rope.timesteps
     x = np.linspace(0, t * rope.dt, t + 1)
@@ -81,5 +78,5 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.rope_force()
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 75, np.array([0, 10]), 7, 0.0001, 800, 0, 0.5, True)
+    main(50, 5, 30000, 10, 75, np.array([5, 0]), 30, 0.001, 100, 0, 0)
         
