@@ -5,7 +5,7 @@ import matplotlib.animation as animation
 class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
-                 damping=0, moisture_content=0.0, air_resistance=0, theta=90.0):
+                 damping=0, moisture_content=0.0, air_resistance=0, theta=90.0, angle = False):
 
         n = N + 2 # number of masses plus the climber and the anchor
         self.dt = dt
@@ -20,11 +20,6 @@ class Rope:
         if np.linalg.norm(M_pos - anchor) > rest_L:
             print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
         self.theta=theta
-        
-        if theta == 90.0:
-            angle= False
-        else:
-            angle = True 
         self.angle=angle
         #i think this is a mistake but perhaps it is correct not too sure # what is a mistake?
         mx_pos = np.linspace(anchor[0], M_pos[0], n)
@@ -54,6 +49,7 @@ class Rope:
     def run(self):
         for i in range(self.timesteps):
             self.update()
+            
             self.f_hist.append(self.f)
             self.p_hist.append(self.pos.copy())
             self.v_hist.append(self.v.copy())
@@ -61,7 +57,7 @@ class Rope:
             if i % 100 == 0:
                 print(i, end="\r")
     
-    def run_with_live_animation(self, update_interval=10):
+    def run_with_live_animation(self, update_interval=50):
         """Run the simulation with live animation of the climber's position"""
         plt.ion()  # Turn on interactive mode
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -75,14 +71,17 @@ class Rope:
         
         ax.set_xlabel('X Position (m)')
         ax.set_ylabel('Y Position (m)')
-        ax.set_title('Live Rope Simulation')
+        ax.set_title('Live Rope Simulation (units: m, s, kg)')
         ax.grid(True, alpha=0.3)
-        ax.axhline(self.anchor[1], color='gray', linestyle='--', alpha=0.5, label='Anchor Level')
+        ax.axhline(self.anchor[1], color='gray', linestyle='--', alpha=0.5, label='Anchor Level (m)')
         
         # Initialize plot elements
         rope_line, = ax.plot([], [], 'b-', linewidth=2, label='Rope')
         climber_point, = ax.plot([], [], 'ro', markersize=10, label='Climber')
         anchor_point, = ax.plot(self.anchor[0], self.anchor[1], 'ks', markersize=12, label='Anchor')
+        if self.angle:
+            wall_x, wall_y = self.wall()
+            ax.plot(wall_x, wall_y, color='k', linestyle='--', label='wall')
         time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, 
                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
         
@@ -90,6 +89,8 @@ class Rope:
         
         for i in range(self.timesteps):
             self.update()
+            if self.angle:
+                self.wall()
             self.f_hist.append(self.f)
             self.p_hist.append(self.pos.copy())
             self.v_hist.append(self.v.copy())
@@ -197,7 +198,7 @@ class Rope:
         return np.array([velocities, acceleration])
 
     def method(self, state):
-        """use the rk4 method to update the state"""
+        #RK4 method for updating the state of the sytem 
         k1 = self.dt * self.derivatives(state, True)
         k2 = self.dt * self.derivatives(state + 0.5 * k1, False)
         k3 = self.dt * self.derivatives(state + 0.5 * k2, False)
@@ -220,23 +221,80 @@ class Rope:
         plt.plot(time, KE_total, linewidth=1.5)
         plt.xlabel('Time (s)')
         plt.ylabel('Total Kinetic Energy (J)')
-        plt.title('Total Kinetic Energy vs Time')
+        plt.title('Total Kinetic Energy vs Time (units: J, s, kg, m)')
         plt.grid(True, alpha=0.3)
         plt.show()
     
+    def rope_force(self):
+        """a function to plot the average force in the rope at each step in the simulation"""
+        avg_forces = []
+        total_forces = []
+        for forces in self.f_hist:
+            # no anchor no climber 
+            rope_forces = forces[1:-1]
+            # axis=1 is used as forces are in 2D
+            norms = np.linalg.norm(rope_forces, axis=1)
+            avg_force = np.mean(norms)
+            total_force = np.sum(norms)
+            total_forces.append(total_force)
+            avg_forces.append(avg_force)
+
+        time_average = np.arange(len(avg_forces)) * self.dt
+        time_total = np.arange(len(total_forces)) * self.dt
+        smooth = True 
+        # the switch to make th force graph look smooth, this helps see the trend better without fluctuations 
+        if smooth:
+            smoothest_forces = []
+            smooth_forces = []
+            for i in range(len(avg_forces)):
+                smooth_forces.append(total_forces[i])
+                if i % 10 == 0:
+                    # do something every 3 steps
+                    mens = np.mean(smooth_forces)
+                    smoothest_forces.append(mens)
+                    smooth_forces = []
+            total_forces = smoothest_forces
+            time_total = np.arange(len(total_forces)) * self.dt * 10
+
+        fig, axs = plt.subplots(1, 2, figsize=(14, 5), sharex=True)
+        axs[0].plot(time_average, avg_forces, linewidth=1.5)
+        axs[0].set_xlabel('Time (s)')
+        axs[0].set_ylabel('Average Rope Force (N)')
+        axs[0].set_title('Average Rope Force vs Time (units: N, s)')
+        axs[0].grid(True, alpha=0.3)
+
+        axs[1].plot(time_total, total_forces, color='tab:orange', linewidth=1.5)
+        axs[1].set_xlabel('Time (s)')
+        axs[1].set_ylabel('Total Rope Force (N)')
+        axs[1].set_title('Total Rope Force vs Time (units: N, s)')
+        axs[1].grid(True, alpha=0.3)
+
+        plt.tight_layout()
+        plt.show()
+
     def wall(self):
-        """if the climber hits the wall thier should be a change of momentum
-        I think keeping this just for the climber and not the whole rope is good enough, 
-        may cost too much to do it for the whole rope"""
-        if self.angle:
-            #find if the climber is in the wall
-            ywall = (self.pos[-1,0]-self.anchor[0])*np.sin(self.theta) + self.anchor[1]
-            if self.pos[-1,1] > ywall:
-                self.v[-1] = - self.v[-1]
-                
-        #could add the wall into the animation as a static line. probably just generate some values and plot.
-    			
- 
+        """Reflect the climber's velocity if they hit the wall (momentum change)."""
+        
+        # Wall: y = tan(theta) * (x - anchor_x) + anchor_y
+        theta_rad = np.deg2rad(self.theta) if self.theta > 2 * np.pi else self.theta
+        x_c, y_c = self.pos[-1, 0], self.pos[-1, 1]
+        ywall = np.tan(theta_rad) * (x_c - self.anchor[0]) + self.anchor[1]
+        # Wall normal vector (perpendicular to wall)
+        n = np.array([-np.sin(theta_rad), np.cos(theta_rad)])
+        v = self.v[-1]
+        # Only reflect if the climber is past the wall and moving into the wall
+        if y_c > ywall and np.dot(v, n) > 0:
+            v_n = np.dot(v, n) * n  # normal component
+            v_t = v - v_n           # tangential component
+            collision_damping = 0.8       # 1.0 = elastic, <1.0 = inelastic
+            self.v[-1] = v_t - collision_damping * v_n
+            print(f"the climber hit the wall and damping factor is {collision_damping}")
+
+        wall_x = np.array([self.anchor[0]-10 ,self.anchor[0], self.anchor[0] + 10])
+        wall_y = np.array([self.anchor[1] - 10*np.tan(theta_rad),self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
+        
+        return (wall_x, wall_y)
+
     def gif(self):
         """a 2D animation for the climber falling,"""
         fig, ax = plt.subplots()
@@ -247,10 +305,17 @@ class Rope:
             y = np.array(self.p_hist)[i,-1, 1]
             container = ax.scatter(x,y, color='b')
             artists.append(container)
+        ax.set_xlabel('X Position (m)')
+        ax.set_ylabel('Y Position (m)')
+        ax.set_title('Climber Position Over Time (units: m, s, kg)')
         ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=10)
         plt.show()
         
-   # def fall_factor_normal(self):
+    def fall_factor_normal(self):
+        #length of rope form anchor to ground 
+        l = 20 
+        fallf = l/self.rest_L
+        return fallf
 
         
     def Fall_factor_calc(self):
@@ -291,15 +356,19 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     plt.plot(x, y)
     plt.axhline(0, color="r", linestyle="--")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Climber Y Position (m)')
+    plt.title('Climber Y Position vs Time (units: m, s, kg)')
     plt.show()
 
     rope.plot_kinetic_energy()
-    #rope.scatter_position()
-    #rope.gif()
-    
+  
+    rope.rope_force()
+    #ff = rope.Fall_factor_calc()
+    #print(f"fall factor is {ff}")
 
     
 if __name__ == "__main__":
-    main(50, 5, 20000, 10, 75, np.array([4, 8]), 30, 0.001, 60, 0, 0.5, True)
+    main(50, 5, 30000, 10, 75, np.array([0, 5]), 30, 0.001, 30, 0, 0, True)
 
 
