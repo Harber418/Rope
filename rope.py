@@ -300,6 +300,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 75, np.array([0, 5]), 30, 0.001, 30, 0, 0, True)
+    main(50, 5, 20000, 10, 75, np.array([4, 8]), 30, 0.001, 60, 0, 0.5, True)
 
 
