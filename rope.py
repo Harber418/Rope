@@ -47,7 +47,7 @@ class Rope:
         self.p_hist.append(self.pos)
         self.v_hist.append(self.v)
 
-        self.run(5) # allow the rope to equilibriate before the fall
+        self.run(3) # allow the rope to equilibriate before the fall
 
     def run(self, t):
         """THIS IS THE EQUILIBRIATION FUNCTION"""
@@ -93,7 +93,7 @@ class Rope:
         time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, 
                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
         
-        ax.legend(loc='upper right')
+        ax.legend(loc='lower left')
         
         for i in range(self.timesteps):
             self.update()
@@ -128,8 +128,14 @@ class Rope:
         plt.show()
 
     def spring_force(self, ri, rj, vi, vj):
+        """calculate the spring force on mass i due to adjacent mass j.
+           ri: {arr} position of mass i
+           rj: {arr} position of mass j
+           vi: {arr} velocity of mass i
+           vj: {arr} velocity of mass j"""
+        # separation of masses
         dx = rj - ri
-        # spring length
+        # magnitude of separation
         l = np.linalg.norm(dx)
 
         if l == 0:
@@ -157,10 +163,13 @@ class Rope:
 
             
     def forces(self, pos, velocities):
+        """calculate the total force acting on each mass in the system.
+                  pos: {arr} the positions of each mass
+           velocities: {arr} the velocities of each mass"""
+        # initialise force array
         f = np.zeros((self.n, 2))
 
-        # must start at anchor to find force due to 
-        # anchor spring on first mass
+        # calculate spring force on every mass
         for i in range(self.n - 1):
             F_e, F_d = self.spring_force(
                 pos[i],
@@ -173,12 +182,11 @@ class Rope:
             f[i] += (F_e + F_d)
             f[i + 1] -= (F_e + F_d)
         
-
-        # gravity
+        # calculate remaining forces
         for i in range(self.n):
+            # apply gravitational force
             f[i, 1] -= self.masses[i] * self.g
-            
-            # air resistance (drag proportional to velocity)
+            # apply drag force/air resistance
             f[i] -= self.air_resistance * velocities[i]
 
         return f
@@ -194,15 +202,14 @@ class Rope:
         self.pos[0] = self.anchor
         self.v[0] = np.zeros(2)
 
-        # Calculate self.f once for history tracking
-        self.f = self.forces(self.pos, self.v)
-
     def derivatives(self, state, tracker):
+        """calculate the velocity and acceleration of every mass
+           by taking the derivative of position and velocity"""
         positions, velocities = state
         forces = self.forces(positions, velocities)
         acceleration = forces / self.masses[:, None]
 
-        # store forces if operating on the actual state
+        # store forces history if operating on the actual state
         if tracker:
             self.f = forces
 
@@ -210,7 +217,10 @@ class Rope:
         return np.array([velocities, acceleration])
 
     def method(self, u_n):
-        # RK4 method for updating the state of the system
+        """method for updating the state of the system.
+           u_n: {arr} current state of the system. u_n[0] contains
+           all mass position. u_n[1] contains all mass velocities"""
+        """RK4 method"""
         U1 = self.dt * self.derivatives(u_n, True)
         U2 = self.dt * self.derivatives(u_n + 0.5 * U1, False)
         U3 = self.dt * self.derivatives(u_n + 0.5 * U2, False)
@@ -364,6 +374,8 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(30, 5, 40000, 10, 75, np.array([5, 0]), 30, 0.001, 30, 0, 0.3)
+    main(30, 5, 40000, 10, 75, np.array([5, 0]), 10, 0.001, 30, 0, 0.5)
+    # note: using at least 0.5 for air resistance gives more realistic results, 
+    # including exponential decay of oscillations
 
 

@@ -5,52 +5,52 @@ from matplotlib import pyplot as plt
 
 class ImplicitRope(Rope):
 
-    def method(self, state):
-        """use the 2-stage Gauss-Legendre method to update the state"""
-        positions, velocities = state
-        
+    def method(self, u_n):
+        """method for updating the state of the system.
+           u_n: {arr} current state of the system. u_n[0] contains
+           all mass position. u_n[1] contains all mass velocities"""
+        """2-stage Gauss-Legendre method"""
         # 2-stage Gauss-Legendre Butcher tableau coefficients
-        sqrt3 = np.sqrt(3)
         a11 = 0.25
-        a12 = 0.25 - sqrt3 / 6.0
-        a21 = 0.25 + sqrt3 / 6.0
+        a12 = 0.25 - np.sqrt(3) / 6.0
+        a21 = 0.25 + np.sqrt(3) / 6.0
         a22 = 0.25
         b1 = 0.5
         b2 = 0.5
         
         # Initial guess for k1 and k2 using explicit Euler
-        k1 = self.derivatives(state, True)
-        k2 = self.derivatives(state, False)
+        U1 = self.derivatives(u_n, True)
+        U2 = self.derivatives(u_n, False)
         
         # Fixed-point iteration to solve the implicit system
         max_iterations = 10
         tolerance = 1e-10
         
         for iteration in range(max_iterations):
-            k1_old = k1.copy()
-            k2_old = k2.copy()
+            U1_old = U1.copy()
+            U2_old = U2.copy()
             
             # Compute intermediate states
-            state1 = state + self.dt * (a11 * k1 + a12 * k2)
-            state2 = state + self.dt * (a21 * k1 + a22 * k2)
+            state1 = u_n + self.dt * (a11 * U1 + a12 * U2)
+            state2 = u_n + self.dt * (a21 * U1 + a22 * U2)
             
             # Evaluate derivatives at intermediate states
-            k1 = self.derivatives(state1, False)
-            k2 = self.derivatives(state2, False)
+            U1 = self.derivatives(state1, False)
+            U2 = self.derivatives(state2, False)
             
             # Check convergence
-            error1 = np.max(np.abs(k1 - k1_old))
-            error2 = np.max(np.abs(k2 - k2_old))
+            error1 = np.max(np.abs(U1 - U1_old))
+            error2 = np.max(np.abs(U2 - U2_old))
             
             if error1 < tolerance and error2 < tolerance:
                 break
         
-        # Update state using the computed k1 and k2
-        new_state = state + self.dt * (b1 * k1 + b2 * k2)
-        new_positions = new_state[0]
-        new_velocities = new_state[1]
+        # Update state using the computed U1 and U2
+        u_n_plus_1 = u_n + self.dt * (b1 * U1 + b2 * U2)
+        new_pos = u_n_plus_1[0]
+        new_v = u_n_plus_1[1]
         
-        return np.array([new_positions, new_velocities])
+        return np.array([new_pos, new_v])
     
 def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0):
 
@@ -78,5 +78,5 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.rope_force()
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 75, np.array([5, 0]), 30, 0.001, 100, 0, 0)
+    main(30, 5, 40000, 10, 75, np.array([5, 0]), 10, 0.001, 30, 0, 0.3)
         

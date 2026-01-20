@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Rope:
+    """Note: this version and rope2.py are not in use"""
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
                  damping=0, moisture_content=0.0, air_resistance=0):
@@ -185,4 +186,4 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 20000, 10, 75, np.array([0, 10]), 40, 20, 0, 1)
+    print(np.array([1,2,3]))
