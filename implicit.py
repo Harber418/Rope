@@ -45,12 +45,8 @@ class ImplicitRope(Rope):
             if error1 < tolerance and error2 < tolerance:
                 break
         
-        # Update state using the computed U1 and U2
-        u_n_plus_1 = u_n + self.dt * (b1 * U1 + b2 * U2)
-        new_pos = u_n_plus_1[0]
-        new_v = u_n_plus_1[1]
-        
-        return np.array([new_pos, new_v])
+        # return u_n+1 using the computed U1 and U2
+        return u_n + self.dt * (b1 * U1 + b2 * U2)
     
 def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0):
 
