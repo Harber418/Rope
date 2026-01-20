@@ -20,7 +20,7 @@ class ImplicitRope(Rope):
         
         # Initial guess for k1 and k2 using explicit Euler
         k1 = self.derivatives(state, True)
-        k2 = k1.copy()
+        k2 = self.derivatives(state, False)
         
         # Fixed-point iteration to solve the implicit system
         max_iterations = 10

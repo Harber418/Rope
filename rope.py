@@ -5,7 +5,9 @@ import matplotlib.animation as animation
 class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
-                 damping=0, moisture_content=0.0, air_resistance=0, theta=45.0, angle = True):
+                 damping=0, moisture_content=0.0, air_resistance=0, 
+                 theta=80.0, angle = True):
+        
 
         n = N + 2 # number of masses plus the climber and the anchor
         self.dt = dt
@@ -13,17 +15,16 @@ class Rope:
         self.moist = moisture_content
         self.damping = damping
         self.air_resistance = air_resistance
-        self.alpha = 1.0
-        self.gamma = dt * 0.5
 
-        #this doesnt mean we cant run the simulation just that the rope is streached from the start
         if np.linalg.norm(M_pos - anchor) > rest_L:
             print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
+        
         self.theta=theta
         self.angle=angle
-        #i think this is a mistake but perhaps it is correct not too sure # what is a mistake?
+        
         mx_pos = np.linspace(anchor[0], M_pos[0], n)
         my_pos = np.linspace(anchor[1], M_pos[1], n)
+
         self.pos = np.array([mx_pos, my_pos]).T
 
         self.masses = np.ones(n) * m / N + self.moist * 0.4 * (np.ones(n) * m / N)
@@ -46,20 +47,19 @@ class Rope:
         self.p_hist.append(self.pos)
         self.v_hist.append(self.v)
 
-        self.run(1) # =< 5 seconds to equilibriate
+        self.run(5) # allow the rope to equilibriate before the fall
 
     def run(self, t):
         """THIS IS THE EQUILIBRIATION FUNCTION"""
         timesteps = t / self.dt
         print(f"Equilibriating, please wait {t} seconds.")
+
         for i in range(int(timesteps)):
             self.update()
             self.pos[-1] = self.M_pos
             self.v[-1] = np.zeros(2)
-            
-            #self.f_hist.append(self.f)
-            #self.p_hist.append(self.pos.copy())
-            #self.v_hist.append(self.v.copy())
+
+        print("Equilibriation complete!")
 
     
     def run_with_live_animation(self, update_interval=50):
@@ -84,9 +84,12 @@ class Rope:
         rope_line, = ax.plot([], [], 'b-', linewidth=2, label='Rope')
         climber_point, = ax.plot([], [], 'ro', markersize=10, label='Climber')
         anchor_point, = ax.plot(self.anchor[0], self.anchor[1], 'ks', markersize=12, label='Anchor')
+        
+        # Plot the wall if angle is enabled
         if self.angle:
             wall_x, wall_y = self.wall()
             ax.plot(wall_x, wall_y, color='k', label='wall')
+
         time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, 
                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
         
@@ -126,6 +129,7 @@ class Rope:
 
     def spring_force(self, ri, rj, vi, vj):
         dx = rj - ri
+        # spring length
         l = np.linalg.norm(dx)
 
         if l == 0:
@@ -155,7 +159,8 @@ class Rope:
     def forces(self, pos, velocities):
         f = np.zeros((self.n, 2))
 
-        # must start at anchor to find L force on first mass
+        # must start at anchor to find force due to 
+        # anchor spring on first mass
         for i in range(self.n - 1):
             F_e, F_d = self.spring_force(
                 pos[i],
@@ -197,19 +202,22 @@ class Rope:
         forces = self.forces(positions, velocities)
         acceleration = forces / self.masses[:, None]
 
+        # store forces if operating on the actual state
         if tracker:
             self.f = forces
 
+        # derivative of [position, velocity] is [velocity, acceleration]
         return np.array([velocities, acceleration])
 
-    def method(self, state):
-        #RK4 method for updating the state of the sytem 
-        k1 = self.dt * self.derivatives(state, True)
-        k2 = self.dt * self.derivatives(state + 0.5 * k1, False)
-        k3 = self.dt * self.derivatives(state + 0.5 * k2, False)
-        k4 = self.dt * self.derivatives(state + k3, False)
-        return state + (k1 + 2 * k2 + 2 * k3 + k4) / 6
-    
+    def method(self, u_n):
+        # RK4 method for updating the state of the system
+        U1 = self.dt * self.derivatives(u_n, True)
+        U2 = self.dt * self.derivatives(u_n + 0.5 * U1, False)
+        U3 = self.dt * self.derivatives(u_n + 0.5 * U2, False)
+        U4 = self.dt * self.derivatives(u_n + U3, False)
+        # return u_n+1
+        return u_n + (U1 + 2 * U2 + 2 * U3 + U4) / 6
+
     def plot_kinetic_energy(self):
         """Plot total kinetic energy of the system over time"""
         KE_total = []
@@ -279,19 +287,20 @@ class Rope:
 
     def wall(self):
         """Reflect the climber's velocity if they hit the wall (momentum change)."""
-        
         # Wall: y = tan(theta) * (x - anchor_x) + anchor_y
         theta_rad = np.deg2rad(self.theta) if self.theta > 2 * np.pi else self.theta
         x_c, y_c = self.pos[-1, 0], self.pos[-1, 1]
         ywall = np.tan(theta_rad) * (x_c - self.anchor[0]) + self.anchor[1]
+
         # Wall normal vector (perpendicular to wall)
         n = np.array([-np.sin(theta_rad), np.cos(theta_rad)])
         v = self.v[-1]
+
         # Only reflect if the climber is past the wall and moving into the wall
         if y_c > ywall and np.dot(v, n) > 0:
             v_n = np.dot(v, n) * n  # normal component
             v_t = v - v_n           # tangential component
-            collision_damping = 0.8       # 1.0 = elastic, <1.0 = inelastic
+            collision_damping = 0.15       # 1.0 = elastic, <1.0 = inelastic
             self.v[-1] = v_t - collision_damping * v_n
             print(f"the climber hit the wall and damping factor is {collision_damping}")
 
@@ -299,22 +308,6 @@ class Rope:
         wall_y = np.array([self.anchor[1] - 10*np.tan(theta_rad),self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
         
         return (wall_x, wall_y)
-
-    def gif(self):
-        """a 2D animation for the climber falling,"""
-        fig, ax = plt.subplots()
-        artists =[]
-        colors = ['tab:blue', 'tab:purple','tab:red']
-        for i in range(self.timesteps):
-            x = np.array(self.p_hist)[i,-1,0]
-            y = np.array(self.p_hist)[i,-1, 1]
-            container = ax.scatter(x,y, color='b')
-            artists.append(container)
-        ax.set_xlabel('X Position (m)')
-        ax.set_ylabel('Y Position (m)')
-        ax.set_title('Climber Position Over Time (units: m, s, kg)')
-        ani = animation.ArtistAnimation(fig=fig, artists=artists, interval=10)
-        plt.show()
         
     def fall_factor_normal(self):
         #length of rope form anchor to ground 
@@ -371,6 +364,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     
 if __name__ == "__main__":
-    main(50, 5, 30000, 10, 75, np.array([5, 0]), 30, 0.001, 30, 0, 0)
+    main(30, 5, 40000, 10, 75, np.array([5, 0]), 30, 0.001, 30, 0, 0.3)
 
 
