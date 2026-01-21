@@ -341,7 +341,7 @@ class Rope:
     
     def save_history(self, filename, fall_factor):
         """Save p_hist, f_hist, v_hist, and fall_factor to a .npz file for later analysis."""
-        np.savez(filename, p_hist=np.array(self.p_hist), f_hist=np.array(self.f_hist), v_hist=np.array(self.v_hist), fall_factor=fall_factor)
+        np.savez(filename, p_hist=np.array(self.p_hist), f_hist=np.array(self.f_hist), v_hist=np.array(self.v_hist), fall_factor=fall_factor, masses=self.masses)
     
 
 def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0):
