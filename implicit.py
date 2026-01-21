@@ -76,6 +76,7 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     rope.plot_kinetic_energy()
     rope.rope_force()
+    rope.save_history("implicit_rope_simulation.npz")
     
 if __name__ == "__main__":
     main(50, 5, 30000, 10, 75, np.array([5, 0]), 30, 0.001, 100, 0, 0)

@@ -35,6 +35,7 @@ class Rope:
         self.n = n
         self.g = g
         self.k = k
+        self.rest = rest_L
         self.l0 = rest_L / (N + 1)  # N+1 springs between N+2 masses
         self.M_pos = M_pos
         self.anchor = anchor
@@ -308,12 +309,9 @@ class Rope:
         wall_y = np.array([self.anchor[1] - 10*np.tan(theta_rad),self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
         
         return (wall_x, wall_y)
-        
-    def fall_factor_normal(self):
-        #length of rope form anchor to ground 
-        l = 20 
-        fallf = l/self.rest_L
-        return fallf
+    
+    def fall(self):
+        return (self.M_pos[1]+(self.anchor[1]-self.rest))/self.rest
 
         
     def Fall_factor_calc(self):
@@ -331,6 +329,11 @@ class Rope:
         #fall_factor = rope_vector[1]/np.linalg.norm(low_point)
         return fall_factor
     
+    def save_history(self, filename, fall_factor):
+        """Save p_hist, f_hist, v_hist, and fall_factor to a .npz file for later analysis."""
+        np.savez(filename, p_hist=np.array(self.p_hist), f_hist=np.array(self.f_hist), v_hist=np.array(self.v_hist), fall_factor=fall_factor)
+    
+
 def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_position, time, dt, damping, moisture, air_resistance=0):
 
     anchor = np.zeros(2)
@@ -361,8 +364,11 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.rope_force()
     #ff = rope.Fall_factor_calc()
     #print(f"fall factor is {ff}")
-
+    fall_factor = rope.fall()
+    print(fall_factor)
     
+    rope.save_history("rope_simulation_data_rk4.npz", fall_factor)
+
 if __name__ == "__main__":
     main(30, 5, 40000, 10, 75, np.array([5, 0]), 30, 0.001, 30, 0, 0.3)
 
