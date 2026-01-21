@@ -1,6 +1,29 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+def position(rk4_file, impl_file):
+    data_rk4 = np.load(rk4_file)
+    data_impl = np.load(impl_file)
+    p_hist_rk4 = data_rk4['p_hist']
+    p_hist_impl = data_impl['p_hist']
+    fall_factor_rk4 = data_rk4['fall_factor']
+    time = data_rk4['time']
+    t = p_hist_rk4.shape[0]
+    x = np.linspace(0, t * time, t + 1)
+
+    y = np.array(p_hist_rk4)[:, -1, 1]
+    y_impl = np.array(p_hist_impl)[:, -1, 1]
+    plt.plot(x, y, label='RK4')
+    plt.plot(x, y_impl, label='Implicit')
+    plt.axhline(0, color="r", linestyle="--")
+    plt.xlabel('Time (s)')
+    plt.ylabel('Climber Y Position (m)')
+    plt.title(f'Climber Y Position vs Time (units: m, s, kg), fall factor {fall_factor_rk4}')
+    plt.legend()
+    plt.show()
+    
+
 def plot_force_comparison(rk4_file, implicit_file):
     """Load force histories from two files and plot their average rope force on the same graph."""
     data_rk4 = np.load(rk4_file)
