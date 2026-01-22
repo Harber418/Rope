@@ -6,7 +6,7 @@ class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
                  damping=0, moisture_content=0.0, air_resistance=0, 
-                 theta=80.0, angle = True):
+                 theta=80.0, angle = False):
         
 
         n = N + 2 # number of masses plus the climber and the anchor
@@ -192,7 +192,6 @@ class Rope:
 
         return f
 
-
     def update(self):
         state = np.array([self.pos, self.v])
         new_state = self.method(state)
@@ -355,6 +354,7 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
         dt, time, damping, moisture, air_resistance  # Reduced timestep
     )
 
+
     rope.run_with_live_animation(update_interval=50)
 
     t = rope.timesteps
@@ -380,7 +380,7 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("rope_simulation_data_rk4.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(30, 5, 40000, 10, 75, np.array([5, 0]), 10, 0.001, 30, 0, 0.5)
+    main(30, 5, 40000, 10, 75, np.array([0, 10]), 10, 0.001, 30, 0, 0.9)
     # note: using at least 0.5 for air resistance gives more realistic results, 
     # including exponential decay of oscillations
 
