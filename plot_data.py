@@ -10,7 +10,9 @@ def position(rk4_file, impl_file):
     fall_factor_rk4 = data_rk4['fall_factor']
     time = data_rk4['time']
     t = p_hist_rk4.shape[0]
-    x = np.linspace(0, t * time, t + 1)
+
+    dt = time / (t - 1)
+    x = np.arange(t) * dt
 
     y = np.array(p_hist_rk4)[:, -1, 1]
     y_impl = np.array(p_hist_impl)[:, -1, 1]
@@ -129,3 +131,22 @@ def tension(rk4_file, implicit_file):
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.show()
+
+def main():
+    rk4_file = 'rope_simulation_data_rk4.npz'
+    implicit_file = 'implicit_rope_simulation.npz'
+
+    position(rk4_file, implicit_file)
+    plot_force_comparison(rk4_file, implicit_file)
+
+    data_rk4 = np.load(rk4_file)
+    data_impl = np.load(implicit_file)
+    masses_rk4 = data_rk4['masses']
+    masses_impl = data_impl['masses']
+
+    plot_kinetic_energy_comparison(rk4_file, implicit_file, masses_rk4, masses_impl)
+    tension(rk4_file, implicit_file)
+
+
+if __name__ == "__main__":
+    main()
