@@ -320,7 +320,10 @@ class Rope:
         return (wall_x, wall_y)
     
     def fall(self):
-        return (self.M_pos[1]+(self.anchor[1]-self.rest))/self.rest
+        """Calculate fall factor: f = h / l, where h is the vertical distance from climber to anchor before the fall, and l is the rope length."""
+        h = abs(self.M_pos[1] - self.anchor[1])
+        l = self.rest
+        return h / l
 
         
     def Fall_factor_calc(self):
@@ -380,8 +383,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("rope_simulation_data_rk4.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(30, 5, 40000, 10, 75, np.array([0, 10]), 10, 0.001, 30, 0, 0.9)
-    # note: using at least 0.5 for air resistance gives more realistic results, 
-    # including exponential decay of oscillations
+    main(50, 5, 40000, 10, 75, np.array([0, 10]), 40, 0.001, 30, 0, 1.2) 
 
 

@@ -72,9 +72,9 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
 
     rope.plot_kinetic_energy()
     rope.rope_force()
-    rope.Fall_factor_calc()
-    rope.save_history("implicit_rope_simulation.npz", rope.fall_factor)
-    
+    fall_factor = rope.fall()
+    print(fall_factor)
+    rope.save_history("implicit_rope_simulation.npz", fall_factor)
+
 if __name__ == "__main__":
-    main(30, 5, 40000, 10, 75, np.array([0, 10]), 10, 0.001, 30, 0, 0.9)
-        
+    main(50, 5, 40000, 10, 75, np.array([0, 10]), 40, 0.001, 30, 0, 1.2)        
