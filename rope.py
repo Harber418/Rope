@@ -383,6 +383,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("rope_simulation_data_rk4.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(50, 5, 40000, 10, 75, np.array([0, 10]), 40, 0.001, 30, 0, 1.2) 
+    main(50, 5, 40000, 10, 75, np.array([6, 8]), 40, 0.001, 30, 0, 1.2) 
 
 
