@@ -55,11 +55,15 @@ def plot_force_comparison(rk4_file, implicit_file):
         total_forces_imp.append(total_force)
     t_rk4 = np.arange(len(total_forces_rk4))
     t_impl = np.arange(len(total_forces_imp))
+    time = data_rk4['time']
+    t = total_forces_rk4.shape[0]
 
+    dt = time / (t - 1)
+    x = np.arange(t) * dt
     plt.figure(figsize=(10, 6))
-    plt.plot(t_rk4, total_forces_rk4, label='RK4 Method', alpha = 0.8, c = "r")
-    plt.plot(t_impl, total_forces_imp, label='Implicit Method', alpha = 0.8, c = "b")
-    plt.xlabel('Time Step')
+    plt.plot(x, total_forces_rk4, label='RK4 Method', alpha = 0.8, c = "r")
+    plt.plot(x, total_forces_imp, label='Implicit Method', alpha = 0.8, c = "b")
+    plt.xlabel('Time (s)')
     plt.ylabel('Rope Force (N)')
     plt.title(f'Rope Force Comparison : fall factor {fall_factor_rk4}, iterations {len(total_forces_rk4)}')
     plt.legend()
@@ -94,11 +98,15 @@ def plot_kinetic_energy_comparison(rk4_file, implicit_file, masses_rk4, masses_i
     ke_impl = total_ke(v_hist_impl, masses_impl)
     t_rk4 = np.arange(len(ke_rk4))
     t_impl = np.arange(len(ke_impl))
+    time = data_rk4['time']
+    t = ke_rk4.shape[0]
 
+    dt = time / (t - 1)
+    x = np.arange(t) * dt
     plt.figure(figsize=(10, 6))
-    plt.plot(t_rk4, ke_rk4, label='RK4 Method')
-    plt.plot(t_impl, ke_impl, label='Implicit Method')
-    plt.xlabel('Time Step')
+    plt.plot(x, ke_rk4, label='RK4 Method')
+    plt.plot(x, ke_impl, label='Implicit Method')
+    plt.xlabel('Time (s)')
     plt.ylabel('Total Kinetic Energy (J)')
     plt.title(f'Total Kinetic Energy Comparison : fall factor {fall_factor_rk4}')
     plt.legend()
@@ -122,10 +130,15 @@ def tension(rk4_file, implicit_file):
     t_rk4 = np.arange(len(tensions_rk4))
     t_impl = np.arange(len(tensions_impl))
 
+    time = data_rk4['time']
+    t = f_hist_rk4.shape[0]
+
+    dt = time / (t - 1)
+    x = np.arange(t) * dt
     plt.figure(figsize=(10, 6))
-    plt.plot(t_rk4, tensions_rk4, label='RK4 Method', alpha = 0.8, c = "r")
-    plt.plot(t_impl, tensions_impl, label='Implicit Method', alpha = 0.8, c = "b")
-    plt.xlabel('Time Step')
+    plt.plot(x, tensions_rk4, label='RK4 Method', alpha = 0.8, c = "r")
+    plt.plot(x, tensions_impl, label='Implicit Method', alpha = 0.8, c = "b")
+    plt.xlabel('Time (s)')
     plt.ylabel('Maximum Tension (N)')
     plt.title(f'Maximum Tension Comparison: fall factor {fall_factor_rk4}')
     plt.legend()
