@@ -138,12 +138,14 @@ class Rope:
         dx = rj - ri
         # magnitude of separation
         l = np.linalg.norm(dx)
-
+        
         if l == 0:
             return np.zeros(2), np.zeros(2)
         # rope does not resist compression
         elif l <= self.l0:
             return np.zeros(2), np.zeros(2)
+
+
 
         # unit vector along spring
         n_hat = dx / l
@@ -373,7 +375,7 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     plt.title('Climber Y Position vs Time (units: m, s, kg)')
     plt.show()
 
-    rope.plot_kinetic_energy()
+    #rope.plot_kinetic_energy()
   
     rope.rope_force()
     #ff = rope.Fall_factor_calc()
@@ -384,6 +386,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("rope_simulation_data_rk4.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(50, 5, 40000, 10, 75, np.array([6, 8]), 40, 0.001, 30, 0, 1.2) 
+    main(70, 5, 40000, 10, 75, np.array([0, 10]), 30, 0.001, 10, 0, 1.08)  
 
 

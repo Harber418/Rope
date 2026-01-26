@@ -56,15 +56,17 @@ def plot_force_comparison(rk4_file, implicit_file):
     t_rk4 = np.arange(len(total_forces_rk4))
     t_impl = np.arange(len(total_forces_imp))
     time = data_rk4['time']
-    t = total_forces_rk4.shape[0]
+    t = np.array(total_forces_rk4).shape[0]
 
     dt = time / (t - 1)
     x = np.arange(t) * dt
+    rk4 = np.array(total_forces_rk4)/1000
+    imp = np.array(total_forces_imp)/1000
     plt.figure(figsize=(10, 6))
-    plt.plot(x, total_forces_rk4, label='RK4 Method', alpha = 0.8, c = "r")
-    plt.plot(x, total_forces_imp, label='Implicit Method', alpha = 0.8, c = "b")
+    plt.plot(x, rk4, label='RK4 Method', alpha = 0.8, c = "r")
+    plt.plot(x, imp, label='Implicit Method', alpha = 0.8, c = "b")
     plt.xlabel('Time (s)')
-    plt.ylabel('Rope Force (N)')
+    plt.ylabel('Rope Force (kN)')
     plt.title(f'Rope Force Comparison : fall factor {fall_factor_rk4}, iterations {len(total_forces_rk4)}')
     plt.legend()
     plt.grid(True, alpha=0.3)
@@ -158,6 +160,7 @@ def climber_jerk(rk4_file, implicit_file):
 
     dt = time / (t - 1)
     x = np.arange(t) * dt  
+    x_jerk = x[101:]
 
     a_hist = []
     for f in f_hist_impl:
@@ -171,15 +174,15 @@ def climber_jerk(rk4_file, implicit_file):
     a_hist_rk4 = []
     for f in f_hist_rk4:
         a = f[-1] / masses_rk4[-1]
-        a_hist.append(a)
+        a_hist_rk4.append(a)
 
     a_hist_rk4 = np.array(a_hist)
     jerk_rk4 = np.diff(a_hist, axis=0) / dt
     jerk_mag_rk4 = np.linalg.norm(jerk, axis=1)
 
     plt.figure()
-    plt.plot(x,jerk_mag,label='implicit')
-    plt.plot(x,jerk_mag_rk4, label='RK4')
+    plt.plot(x_jerk,jerk_mag[100:],label='implicit')
+    plt.plot(x_jerk,jerk_mag_rk4[100:], label='RK4')
     plt.title(f'Jerk experiensed by the climber, fall factor {fall_factor_rk4}')
     plt.xlabel('time (s)')
     plt.ylabel('magnitude of jerk')
