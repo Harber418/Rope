@@ -145,6 +145,49 @@ def tension(rk4_file, implicit_file):
     plt.grid(True, alpha=0.3)
     plt.show()
 
+def climber_jerk(rk4_file, implicit_file):
+    data_rk4 = np.load(rk4_file)
+    data_impl = np.load(implicit_file)
+    f_hist_rk4 = data_rk4['f_hist']
+    f_hist_impl = data_impl['f_hist']
+    fall_factor_rk4 = data_rk4['fall_factor']
+    masses_rk4 = data_rk4['masses']
+    masses_impl = data_impl['masses'] 
+    time = data_rk4['time']
+    t = f_hist_rk4.shape[0]
+
+    dt = time / (t - 1)
+    x = np.arange(t) * dt  
+
+    a_hist = []
+    for f in f_hist_impl:
+        a = f[-1] / masses_impl[-1]
+        a_hist.append(a)
+
+    a_hist = np.array(a_hist)
+    jerk = np.diff(a_hist, axis=0) / dt
+    jerk_mag = np.linalg.norm(jerk, axis=1)
+
+    a_hist_rk4 = []
+    for f in f_hist_rk4:
+        a = f[-1] / masses_rk4[-1]
+        a_hist.append(a)
+
+    a_hist_rk4 = np.array(a_hist)
+    jerk_rk4 = np.diff(a_hist, axis=0) / dt
+    jerk_mag_rk4 = np.linalg.norm(jerk, axis=1)
+
+    plt.figure()
+    plt.plot(x,jerk_mag,label='implicit')
+    plt.plot(x,jerk_mag_rk4, label='RK4')
+    plt.title(f'Jerk experiensed by the climber, fall factor {fall_factor_rk4}')
+    plt.xlabel('time (s)')
+    plt.ylabel('magnitude of jerk')
+    plt.legend()
+    plt.show()
+    
+
+
 def main():
     rk4_file = 'rope_simulation_data_rk4.npz'
     implicit_file = 'implicit_rope_simulation.npz'
@@ -159,6 +202,7 @@ def main():
 
     plot_kinetic_energy_comparison(rk4_file, implicit_file, masses_rk4, masses_impl)
     tension(rk4_file, implicit_file)
+    climber_jerk(rk4_file, implicit_file)
 
 
 if __name__ == "__main__":
