@@ -321,8 +321,9 @@ class Rope:
     
     def fall(self):
         """Calculate fall factor: f = h / l, where h is the vertical distance from climber to anchor before the fall, and l is the rope length."""
-        h = abs(self.M_pos[1] - self.anchor[1])
         l = self.rest
+        h = abs(self.M_pos[1] - (self.anchor[1]-l))
+        
         return h / l
 
         
