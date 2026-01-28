@@ -24,7 +24,7 @@ class ImplicitRope(Rope):
         
         # Fixed-point iteration to solve the implicit system
         max_iterations = 30
-        tolerance = 1e-8
+        tolerance = 1e-10
         
         for iteration in range(max_iterations):
             U1_old = U1.copy()
