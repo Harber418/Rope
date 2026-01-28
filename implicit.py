@@ -23,8 +23,8 @@ class ImplicitRope(Rope):
         U2 = self.derivatives(u_n, False)
         
         # Fixed-point iteration to solve the implicit system
-        max_iterations = 10
-        tolerance = 1e-10
+        max_iterations = 30
+        tolerance = 1e-8
         
         for iteration in range(max_iterations):
             U1_old = U1.copy()
@@ -77,4 +77,4 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("implicit_rope_simulation.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(50, 5, 40000, 10, 75, np.array([0, 10]), 40, 0.001, 30, 0, 1.2)        
+    main(100, 3, 70000, 5, 75, np.array([0,5]), 15, 0.001, 10, 0, 1.08)        

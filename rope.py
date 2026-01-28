@@ -6,7 +6,7 @@ class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
                  damping=0, moisture_content=0.0, air_resistance=0, 
-                 theta=80.0, angle = False):
+                 theta=59.0, angle = False):
         
 
         n = N + 2 # number of masses plus the climber and the anchor
@@ -39,6 +39,10 @@ class Rope:
         self.l0 = rest_L / (N + 1)  # N+1 springs between N+2 masses
         self.M_pos = M_pos
         self.anchor = anchor
+        self.k_soft = self.k              # low-strain stiffness
+        self.k_stiff = 6 * self.k         # high-strain stiffness
+        self.strain_switch = 0.07         # ~7% elongation
+
 
         self.f_hist = []
         self.p_hist = []
@@ -162,6 +166,50 @@ class Rope:
 
         # return elastic and damping forces on mass i
         return F_elastic, F_damping
+    
+    def spring_force_non_linear(self, ri, rj, vi, vj):
+        dx = rj - ri
+        l = np.linalg.norm(dx)
+
+        # floor the length to avoid division by zero / NaNs in implicit iterations
+        l_eff = max(l, 1e-6)
+
+        n_hat = dx / l_eff
+        # strain
+        strain = (l_eff - self.l0) / self.l0
+
+        delta = l_eff - self.l0
+        if delta <= 0:
+            return np.zeros(2), np.zeros(2)
+
+        n_hat = dx / l_eff
+        strain = delta / self.l0
+
+        if strain <= 0:
+            return np.zeros(2), np.zeros(2)
+
+        # strain-stiffening law
+        if strain < self.strain_switch:
+            Fs_mag = self.k_soft * (l_eff - self.l0)
+        else:
+            Fs_mag = (
+                self.k_soft * self.strain_switch * self.l0
+                + self.k_stiff * (strain - self.strain_switch) * self.l0
+            )
+
+        F_elastic = Fs_mag * n_hat
+        v_rel = np.dot(vj - vi, n_hat)
+
+        if v_rel > 0:
+            v_cap = 5.0  # m/s
+            v_eff = np.tanh(v_rel / v_cap) * v_cap
+            F_damping = self.damping * v_eff * n_hat
+        else:
+            F_damping = np.zeros(2)
+
+
+        return F_elastic, F_damping
+
 
 
             
@@ -174,7 +222,7 @@ class Rope:
 
         # calculate spring force on every mass
         for i in range(self.n - 1):
-            F_e, F_d = self.spring_force(
+            F_e, F_d = self.spring_force_non_linear(
                 pos[i],
                 pos[i + 1],
                 velocities[i],
@@ -297,6 +345,9 @@ class Rope:
         plt.tight_layout()
         plt.show()
 
+    
+    
+
     def wall(self):
         """Reflect the climber's velocity if they hit the wall (momentum change)."""
         # Wall: y = tan(theta) * (x - anchor_x) + anchor_y
@@ -386,6 +437,6 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("rope_simulation_data_rk4.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(70, 5, 40000, 10, 75, np.array([0, 10]), 30, 0.001, 10, 0, 1.08)  
+    main(100, 3, 70000, 5, 75, np.array([0,5]), 15, 0.001, 10, 0, 1.08)
 
 
