@@ -6,7 +6,7 @@ class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
                  damping=0, moisture_content=0.0, air_resistance=0, 
-                 theta=59.0, angle = False):
+                 theta=59.0, angle = False,year=0):
         
 
         n = N + 2 # number of masses plus the climber and the anchor
@@ -15,9 +15,9 @@ class Rope:
         self.moist = moisture_content
         self.damping = damping
         self.air_resistance = air_resistance
-        self.year = 0
+        self.year = year
         self.pvu = 0 + self.year*0.15
-        self.creep = 0 +self.year(0.125)
+        self.creep = 0 +self.year*0.125
         self.k = k*(1-min(self.puv,0.65)*(1-min(self.p_creep,0.65))
         if np.linalg.norm(M_pos - anchor) > rest_L:
             print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
