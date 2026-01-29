@@ -15,7 +15,10 @@ class Rope:
         self.moist = moisture_content
         self.damping = damping
         self.air_resistance = air_resistance
-
+        self.year = 0
+        self.pvu = 0 + self.year*0.15
+        self.creep = 0 +self.year(0.125)
+        self.k = k*(1-min(self.puv,0.65)*(1-min(self.p_creep,0.65))
         if np.linalg.norm(M_pos - anchor) > rest_L:
             print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
         
@@ -34,7 +37,7 @@ class Rope:
 
         self.n = n
         self.g = g
-        self.k = k
+        
         self.rest = rest_L
         self.l0 = rest_L / (N + 1)  # N+1 springs between N+2 masses
         self.M_pos = M_pos
@@ -222,7 +225,7 @@ class Rope:
 
         # calculate spring force on every mass
         for i in range(self.n - 1):
-            F_e, F_d = self.spring_force_non_linear(
+            F_e, F_d = self.spring_force(
                 pos[i],
                 pos[i + 1],
                 velocities[i],
