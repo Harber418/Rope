@@ -175,8 +175,7 @@ class Rope:
         l_eff = max(l, 1e-6)
 
         n_hat = dx / l_eff
-        # strain
-        strain = (l_eff - self.l0) / self.l0
+        
 
         delta = l_eff - self.l0
         if delta <= 0:
