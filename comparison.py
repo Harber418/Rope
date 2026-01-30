@@ -15,7 +15,7 @@ def position(sets):
     p_hist_r4 = data_r4['p_hist']
     p_hist_r5 = data_r5['p_hist']
     
-    fall_factor_rk4 = p_hist_r1['fall_factor']
+    fall_factor_rk4 = data_r1['fall_factor']
     time = data_r1['time']
     t = p_hist_r1.shape[0]
 
