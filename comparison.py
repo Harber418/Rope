@@ -84,9 +84,9 @@ def plot_force_comparison(sets):
 
     plt.figure(figsize=(10, 6))
     plt.plot(x, plotting[0], label='1 year', alpha = 0.8, c = "r")
-    plt.plot(x, plotting[1], label='2 yeaer', alpha = 0.8, c = "b")
-    plt.plot(x, plotting[2], label='3 yeaer', alpha = 0.8, c = "b")
-    plt.plot(x, plotting[3], label='4 yeaer', alpha = 0.8, c = "b")
+    plt.plot(x, plotting[1], label='2 yeaer', alpha = 0.8, c = "hotpink")
+    plt.plot(x, plotting[2], label='3 yeaer', alpha = 0.8, c = "purple")
+    plt.plot(x, plotting[3], label='4 yeaer', alpha = 0.8, c = "indigo")
     plt.plot(x, plotting[4], label='5 yeaer', alpha = 0.8, c = "b")
 
     plt.xlabel('Time (s)')
