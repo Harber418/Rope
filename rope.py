@@ -18,7 +18,7 @@ class Rope:
         self.year = 1
         self.pvu = 0 + self.year*0.15
         self.creep = 0 +self.year*0.125
-        self.k = k*(1-min(self.puv,0.65)*(1-min(self.p_creep,0.65)))
+        self.k = k*(1-min(self.pvu,0.65)*(1-min(self.creep,0.65)))
         if np.linalg.norm(M_pos - anchor) > rest_L:
             print("the distance between the anchor and the climber is larger than the length of rope, the rope is stretched")
         
