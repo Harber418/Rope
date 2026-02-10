@@ -77,4 +77,4 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("implicit_rope_simulation.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(100, 3, 70000, 5, 75, np.array([0,5]), 15, 0.001, 10, 0, 1.08)        
+    main(40, 1, 70000, 2.5, 75, np.array([-1, 1.5]), 5, 0.001, 15, 0, 1.08)      

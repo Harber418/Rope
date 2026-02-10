@@ -6,7 +6,7 @@ class Rope:
 
     def __init__(self, N, m, g, k, rest_L, M, M_pos, anchor, dt, time,
                  damping=0, moisture_content=0.0, air_resistance=0, 
-                 theta=59.0, angle = False):
+                 theta=30.0, angle = True):
         
 
         n = N + 2 # number of masses plus the climber and the anchor
@@ -55,7 +55,7 @@ class Rope:
         self.p_hist.append(self.pos)
         self.v_hist.append(self.v)
 
-        self.run(3) # allow the rope to equilibriate before the fall
+        self.run(0) # allow the rope to equilibriate before the fall
 
     def run(self, t):
         """THIS IS THE EQUILIBRIATION FUNCTION"""
@@ -354,6 +354,7 @@ class Rope:
         """Reflect the climber's velocity if they hit the wall (momentum change)."""
         # Wall: y = tan(theta) * (x - anchor_x) + anchor_y
         theta_rad = np.deg2rad(self.theta) if self.theta > 2 * np.pi else self.theta
+        theta_rad *= -1  # flip the wall to the right side of the anchor
         x_c, y_c = self.pos[-1, 0], self.pos[-1, 1]
         ywall = np.tan(theta_rad) * (x_c - self.anchor[0]) + self.anchor[1]
 
@@ -362,15 +363,15 @@ class Rope:
         v = self.v[-1]
 
         # Only reflect if the climber is past the wall and moving into the wall
-        if y_c > ywall and np.dot(v, n) > 0:
+        if x_c > 0 and y_c > ywall and np.dot(v, n) > 0:
             v_n = np.dot(v, n) * n  # normal component
             v_t = v - v_n           # tangential component
             collision_damping = 0.15       # 1.0 = elastic, <1.0 = inelastic
             self.v[-1] = v_t - collision_damping * v_n
             print(f"the climber hit the wall and damping factor is {collision_damping}")
 
-        wall_x = np.array([self.anchor[0]-10 ,self.anchor[0], self.anchor[0] + 10])
-        wall_y = np.array([self.anchor[1] - 10*np.tan(theta_rad),self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
+        wall_x = np.array([self.anchor[0], self.anchor[0], self.anchor[0] + 10])
+        wall_y = np.array([self.anchor[1]+5, self.anchor[1], self.anchor[1] + 10*np.tan(theta_rad)])
         
         return (wall_x, wall_y)
     
@@ -439,5 +440,5 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("rope_simulation_data_rk4.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(100, 3, 70000, 5, 75, np.array([0,5]), 15, 0.001, 10, 0, 1.08)
+    main(30, 1, 70000, 2.5, 75, np.array([-1, 1]), 5, 0.001, 10, 0, 1.08)
 
