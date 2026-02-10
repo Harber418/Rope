@@ -55,7 +55,7 @@ class Rope:
         self.p_hist.append(self.pos)
         self.v_hist.append(self.v)
 
-        self.run(3) # allow the rope to equilibriate before the fall
+        self.run(1) # allow the rope to equilibriate before the fall
 
     def run(self, t):
         """THIS IS THE EQUILIBRIATION FUNCTION"""
@@ -70,70 +70,54 @@ class Rope:
         print("Equilibriation complete!")
 
     
-    def run_with_live_animation(self, update_interval=50):
-        """Run the simulation with live animation of the climber's position"""
-        plt.ion()  # Turn on interactive mode
+    def run_with_live_animation(self, update_interval=50, save_path="animation1.gif"):
+        """Run the simulation with live animation of the climber's position. Optionally save as a movie file."""
         fig, ax = plt.subplots(figsize=(10, 8))
-        
-        # Set up the plot limits based on initial conditions
-        y_min = min(self.anchor[1], self.M_pos[1]) - self.l0 * (self.n - 1) * 2
+        y_min = min(self.anchor[1], self.M_pos[1]) - self.l0 * (self.n - 1) * 2 -1
         y_max = max(self.anchor[1], self.M_pos[1]) + 2
         x_range = abs(self.M_pos[0] - self.anchor[0]) + 5
         ax.set_xlim(self.anchor[0] - x_range, self.anchor[0] + x_range)
         ax.set_ylim(y_min, y_max)
-        
         ax.set_xlabel('X Position (m)')
         ax.set_ylabel('Y Position (m)')
         ax.set_title('Live Rope Simulation (units: m, s, kg)')
         ax.grid(True, alpha=0.3)
         ax.axhline(self.anchor[1], color='gray', linestyle='--', alpha=0.5, label='Anchor Level (m)')
-        
-        # Initialize plot elements
         rope_line, = ax.plot([], [], 'b-', linewidth=2, label='Rope')
         climber_point, = ax.plot([], [], 'ro', markersize=10, label='Climber')
         anchor_point, = ax.plot(self.anchor[0], self.anchor[1], 'ks', markersize=12, label='Anchor')
-        
-        # Plot the wall if angle is enabled
         if self.angle:
             wall_x, wall_y = self.wall()
             ax.plot(wall_x, wall_y, color='k', label='wall')
-
         time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, 
                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-        
         ax.legend(loc='lower left')
-        
-        for i in range(self.timesteps):
-            self.update()
-            if self.angle:
-                self.wall()
-            self.f_hist.append(self.f)
-            self.p_hist.append(self.pos.copy())
-            self.v_hist.append(self.v.copy())
-            
-            # Update the plot at specified intervals
-            if i % update_interval == 0:
-                # Update rope line
-                rope_line.set_data(self.pos[:, 0], self.pos[:, 1])
-                
-                # Update climber position
-                climber_point.set_data([self.pos[-1, 0]], [self.pos[-1, 1]])
-                
-                # Update time text
-                current_time = i * self.dt
-                time_text.set_text(f'Time: {current_time:.3f}s\nStep: {i}/{self.timesteps}')
-                
-                # Redraw the plot
-                fig.canvas.draw()
-                fig.canvas.flush_events()
-                plt.pause(0.001)
-            
-            if i % 1000 == 0:
-                print(f"Progress: {i}/{self.timesteps}", end="\r")
-        
-        plt.ioff()  # Turn off interactive mode
-        print(f"\nSimulation complete!")
-        plt.show()
+        frames = self.timesteps // update_interval
+        def init():
+            rope_line.set_data([], [])
+            climber_point.set_data([], [])
+            time_text.set_text('')
+            return rope_line, climber_point, time_text
+        def animate(frame):
+            for _ in range(update_interval):
+                self.update()
+                if self.angle:
+                    self.wall()
+                self.f_hist.append(self.f)
+                self.p_hist.append(self.pos.copy())
+                self.v_hist.append(self.v.copy())
+            rope_line.set_data(self.pos[:, 0], self.pos[:, 1])
+            climber_point.set_data([self.pos[-1, 0]], [self.pos[-1, 1]])
+            current_time = (frame * update_interval) * self.dt
+            time_text.set_text(f'Time: {current_time:.3f}s\nStep: {frame * update_interval}/{self.timesteps}')
+            return rope_line, climber_point, time_text
+        ani = animation.FuncAnimation(fig, animate, frames=frames, init_func=init, blit=True)
+        if save_path:
+            ani.save(save_path, writer='ffmpeg', fps=30)
+            print(f"Animation saved to {save_path}")
+        else:
+            plt.show()
+        print("\nSimulation complete!")
 
     def spring_force(self, ri, rj, vi, vj):
         """calculate the spring force on mass i due to adjacent mass j.
@@ -439,5 +423,5 @@ def main(segments, rope_weight, K, length_of_rope, mass_of_climber, climber_posi
     rope.save_history("rope_simulation_data_rk4.npz", fall_factor)
 
 if __name__ == "__main__":
-    main(100, 3, 70000, 5, 75, np.array([0,5]), 15, 0.001, 10, 0, 1.08)
+    main(100, 3, 70000, 5, 75, np.array([0,5]), 5, 0.001, 10, 0, 1.08)
 
