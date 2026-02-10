@@ -70,8 +70,17 @@ class Rope:
         print("Equilibriation complete!")
 
     
-    def run_with_live_animation(self, update_interval=50, save_path="animation1.gif"):
+    def run_with_live_animation(self, update_interval=None, save_path="animation1.gif"):
         """Run the simulation with live animation of the climber's position. Optionally save as a movie file."""
+        # Calculate frames to match animation time with simulation time at 30 fps
+        fps = 30
+        simulation_time = self.timesteps * self.dt
+        frames = int(simulation_time * fps)
+        if update_interval is None:
+            update_interval = max(1, self.timesteps // frames)
+        else:
+            frames = self.timesteps // update_interval
+        
         fig, ax = plt.subplots(figsize=(10, 8))
         y_min = min(self.anchor[1], self.M_pos[1]) - self.l0 * (self.n - 1) * 2 -1
         y_max = max(self.anchor[1], self.M_pos[1]) + 2
@@ -92,7 +101,6 @@ class Rope:
         time_text = ax.text(0.02, 0.95, '', transform=ax.transAxes, 
                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
         ax.legend(loc='lower left')
-        frames = self.timesteps // update_interval
         def init():
             rope_line.set_data([], [])
             climber_point.set_data([], [])
@@ -111,9 +119,11 @@ class Rope:
             current_time = (frame * update_interval) * self.dt
             time_text.set_text(f'Time: {current_time:.3f}s\nStep: {frame * update_interval}/{self.timesteps}')
             return rope_line, climber_point, time_text
-        ani = animation.FuncAnimation(fig, animate, frames=frames, init_func=init, blit=True)
+        # Calculate interval (milliseconds between frames) to display animation at correct speed
+        animation_interval = (simulation_time * 1000) / frames  # ms per frame
+        ani = animation.FuncAnimation(fig, animate, frames=frames, init_func=init, blit=True, interval=animation_interval)
         if save_path:
-            ani.save(save_path, writer='ffmpeg', fps=30)
+            ani.save(save_path, writer='ffmpeg', fps=fps)
             print(f"Animation saved to {save_path}")
         else:
             plt.show()
@@ -300,7 +310,7 @@ class Rope:
 
         time_average = np.arange(len(avg_forces)) * self.dt
         time_total = np.arange(len(total_forces)) * self.dt
-        smooth = True 
+        smooth = False 
         # the switch to make th force graph look smooth, this helps see the trend better without fluctuations 
         if smooth:
             smoothest_forces = []
@@ -315,19 +325,11 @@ class Rope:
             total_forces = smoothest_forces
             time_total = np.arange(len(total_forces)) * self.dt * 10
 
-        fig, axs = plt.subplots(1, 2, figsize=(14, 5), sharex=True)
-        axs[0].plot(time_average, avg_forces, linewidth=1.5)
-        axs[0].set_xlabel('Time (s)')
-        axs[0].set_ylabel('Average Rope Force (N)')
-        axs[0].set_title('Average Rope Force vs Time (units: N, s)')
-        axs[0].grid(True, alpha=0.3)
-
-        axs[1].plot(time_total, total_forces, color='tab:orange', linewidth=1.5)
-        axs[1].set_xlabel('Time (s)')
-        axs[1].set_ylabel('Total Rope Force (N)')
-        axs[1].set_title('Total Rope Force vs Time (units: N, s)')
-        axs[1].grid(True, alpha=0.3)
-
+        plt.plot(time_total, total_forces, color='tab:orange', linewidth=1.5)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Total Rope Force (N)')
+        plt.title('Total Rope Force vs Time (units: N, s)')
+        plt.grid(True, alpha=0.3)
         plt.tight_layout()
         plt.show()
 
